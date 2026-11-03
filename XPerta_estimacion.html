@@ -1,0 +1,1504 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>XPerta · Estimación de proyectos</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;600;700&family=Silkscreen&display=swap">
+<style>/* layout: HUD superior negro · escena pixel a la izquierda · mesa de estimación a la derecha · informe en una columna */
+:root{
+ --red:#E50914;--red2:#B20710;--ink:#141414;--ink2:#2b2b2b;--paper:#ffffff;--soft:#f6f5f3;--line:#e2e0dc;--muted:#6b6b6b;
+ --amber:#F5A524;--green:#2E9E5B;--blue:#2B6CB0;--pink:#fff1f2;
+ --disp:'Bebas Neue',Impact,'Arial Narrow Bold',sans-serif;--body:'Inter',system-ui,-apple-system,'Segoe UI',sans-serif;--pix:'Silkscreen','Courier New',monospace;
+ color-scheme:light;
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--body);font-size:15px;line-height:1.5}
+button{font:inherit;color:inherit}
+:focus-visible{outline:3px solid var(--red);outline-offset:2px}
+.pix{font-family:var(--pix);letter-spacing:.02em}
+.disp{font-family:var(--disp);letter-spacing:.02em;line-height:.95}
+.muted{color:var(--muted)}.small{font-size:13px}.tiny{font-size:11.5px}
+.wrap{max-width:1360px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+
+/* ---------- INTRO ---------- */
+#intro{position:fixed;inset:0;background:radial-gradient(ellipse at 50% 40%,#2a0b0d 0%,#141414 60%);z-index:50;overflow:auto;color:#fff}
+#intro .stage{position:absolute;inset:0}
+#intro .ov{position:relative;min-height:100%;display:grid;grid-template-rows:1fr auto;padding:28px max(16px,env(safe-area-inset-left,0px)) 28px}
+#intro .top{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap}
+#intro .kick{font-family:var(--pix);font-size:12px;color:#ff9aa0;letter-spacing:.08em}
+#intro .fallback{display:none;font-family:var(--disp);font-size:clamp(80px,16vw,220px);color:var(--red);text-shadow:6px 6px 0 #5c070c;text-align:center;margin-top:12vh}
+#intro.nogl .fallback{display:block}
+#intro .panel{background:rgba(20,20,20,.86);border:2px solid #fff;box-shadow:8px 8px 0 var(--red);padding:22px;max-width:720px;margin:0 auto;width:100%;backdrop-filter:blur(3px)}
+#intro h1{font-family:var(--disp);font-size:clamp(34px,5vw,54px);margin:0 0 4px;font-weight:400;text-wrap:balance}
+#intro .tag{color:#d8d8d8;margin:0 0 16px}
+#intro .rules{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:0 0 16px}
+#intro .rules div{border:1px solid #444;padding:10px;font-size:13px;color:#ddd}
+#intro .rules b{display:block;font-family:var(--pix);font-size:11px;color:#ff9aa0;margin-bottom:4px;font-weight:400}
+#intro .row{display:flex;gap:10px;flex-wrap:wrap}
+#intro input{flex:1 1 220px;min-width:0;background:#fff;color:var(--ink);border:2px solid #fff;padding:12px 14px;font-size:16px;font-family:var(--body)}
+.btn{background:var(--red);color:#fff;border:2px solid var(--ink);box-shadow:4px 4px 0 var(--ink);padding:11px 18px;font-family:var(--pix);font-size:13px;cursor:pointer;transition:transform .08s,box-shadow .08s}
+.btn:hover{transform:translate(-1px,-1px);box-shadow:5px 5px 0 var(--ink)}
+.btn:active{transform:translate(3px,3px);box-shadow:1px 1px 0 var(--ink)}
+.btn[disabled]{background:#bbb;color:#555;cursor:not-allowed;box-shadow:2px 2px 0 #888}
+.btn.ghost{background:#fff;color:var(--ink)}
+#intro .btn{border-color:#fff;box-shadow:4px 4px 0 #fff}
+.hint{font-size:12px;color:#aaa;margin-top:10px}
+
+/* ---------- HUD ---------- */
+.hud{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:var(--ink);color:#fff;border-bottom:3px solid var(--red)}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:21;background:var(--ink)}
+.hud .wrap{display:flex;align-items:center;gap:14px;flex-wrap:wrap;padding-block:8px}
+.logo{font-family:var(--disp);font-size:30px;color:var(--red);line-height:1;letter-spacing:.03em}
+.hud .who{font-family:var(--pix);font-size:11px;color:#bbb}
+.hud .stats{display:flex;gap:6px;flex-wrap:wrap;margin-left:auto}
+.stat{font-family:var(--pix);font-size:11px;background:#262626;border:1px solid #3a3a3a;padding:4px 8px;white-space:nowrap}
+.stat b{color:#fff;font-weight:400}.stat i{font-style:normal;color:#9a9a9a}
+.hud .gl{background:transparent;border:1px solid #555;color:#ddd;font-family:var(--pix);font-size:11px;padding:4px 8px;cursor:pointer}
+
+/* ---------- CASO ---------- */
+.casehead{display:flex;gap:16px;align-items:flex-end;justify-content:space-between;flex-wrap:wrap;padding-block:18px 10px}
+.casehead h2{font-family:var(--disp);font-size:clamp(30px,4vw,46px);margin:0;font-weight:400;text-wrap:balance}
+.casehead .meta{font-family:var(--pix);font-size:11px;color:var(--muted)}
+.chip{display:inline-block;font-family:var(--pix);font-size:10.5px;padding:3px 7px;border:1px solid var(--ink);background:#fff;white-space:nowrap}
+.chip.red{background:var(--red);color:#fff;border-color:var(--red)}
+.chip.dark{background:var(--ink);color:#fff}
+.grid{display:grid;grid-template-columns:minmax(0,1.08fr) minmax(0,1fr);gap:20px;padding-bottom:40px}
+@media(max-width:980px){.grid{grid-template-columns:minmax(0,1fr)}}
+.col{display:flex;flex-direction:column;gap:14px;min-width:0}
+.screen{position:relative;border:3px solid var(--ink);box-shadow:6px 6px 0 var(--ink);background:#000;line-height:0}
+.screen canvas{width:100%;height:auto;image-rendering:pixelated;image-rendering:crisp-edges;display:block}
+.note{position:absolute;left:10px;right:10px;top:10px;background:rgba(20,20,20,.94);color:#fff;border:2px solid #fff;padding:12px 14px;line-height:1.45;font-size:14px}
+.note .nh{font-family:var(--pix);font-size:11px;color:#ff9aa0;display:flex;justify-content:space-between;gap:8px;margin-bottom:4px}
+.note button{background:none;border:1px solid #777;color:#ddd;font-family:var(--pix);font-size:10px;cursor:pointer;padding:1px 6px}
+.hots{display:flex;flex-wrap:wrap;gap:6px}
+.hots button{font-family:var(--pix);font-size:11px;border:2px solid var(--ink);background:#fff;padding:5px 9px;cursor:pointer}
+.hots button.seen{background:var(--soft);color:var(--muted)}
+.hots button.seen::before{content:'✓ ';color:var(--green)}
+.card{border:2px solid var(--ink);background:#fff}
+.card>.ch{display:flex;justify-content:space-between;align-items:center;gap:8px;border-bottom:2px solid var(--ink);padding:8px 12px;background:var(--soft)}
+.card>.ch .t{font-family:var(--pix);font-size:12px}
+.card>.cb{padding:12px 14px}
+.mail .from{font-size:12.5px;color:var(--muted);margin-bottom:6px}
+.mail p{margin:0;max-width:68ch}
+.tabs{display:flex;border-bottom:2px solid var(--ink);background:var(--soft)}
+.tabs button{flex:1;border:0;border-right:2px solid var(--ink);background:transparent;padding:9px 6px;font-family:var(--pix);font-size:11px;cursor:pointer}
+.tabs button:last-child{border-right:0}
+.tabs button.on{background:var(--ink);color:#fff}
+.tabs button .n{display:inline-block;background:var(--red);color:#fff;padding:0 4px;margin-left:4px}
+.clue{border-left:4px solid var(--red);padding:6px 10px;margin:0 0 8px;background:var(--pink)}
+.clue b{font-family:var(--pix);font-size:10.5px;font-weight:400;display:block;color:var(--red2)}
+.empty{color:var(--muted);font-size:13px}
+.term{border:1px solid var(--line);margin-bottom:6px}
+.term>button{width:100%;text-align:left;border:0;background:#fff;padding:8px 10px;cursor:pointer;font-weight:600;display:flex;justify-content:space-between;gap:8px}
+.term>button::after{content:'+';font-family:var(--pix)}
+.term.open>button::after{content:'–'}
+.term .tb{padding:0 10px 10px;font-size:13.5px;display:none}
+.term.open .tb{display:block}
+.term a{color:var(--red2);font-weight:600}
+table.hist{width:100%;border-collapse:collapse;font-size:13px}
+table.hist td,table.hist th{border-bottom:1px solid var(--line);padding:6px 4px;text-align:left;vertical-align:top}
+table.hist td.n{font-variant-numeric:tabular-nums;white-space:nowrap;font-weight:700}
+textarea{width:100%;min-height:130px;border:2px solid var(--ink);padding:10px;font:inherit;font-size:14px;resize:vertical}
+
+/* ---------- MESA ---------- */
+.desk{border:3px solid var(--ink);box-shadow:6px 6px 0 var(--ink);background:#fff}
+.desk>.dh{background:var(--ink);color:#fff;padding:10px 14px;display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
+.desk>.dh .t{font-family:var(--disp);font-size:26px;letter-spacing:.03em}
+.sec{padding:12px 14px;border-bottom:2px dashed var(--line)}
+.sec:last-of-type{border-bottom:0}
+.sh{display:flex;align-items:baseline;gap:8px;margin-bottom:8px;flex-wrap:wrap}
+.dom{font-family:var(--pix);font-size:10px;background:var(--red);color:#fff;padding:2px 6px}
+.sh .q{font-weight:700}
+.sh .ok{margin-left:auto;font-family:var(--pix);font-size:10px;color:var(--muted)}
+.sh .ok.done{color:var(--green)}
+.seg{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}
+@media(max-width:520px){.seg{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.opt{border:2px solid var(--ink);background:#fff;padding:8px;text-align:left;cursor:pointer;min-width:0}
+.opt b{display:block;font-family:var(--pix);font-size:11.5px;font-weight:400}
+.opt span{display:block;font-size:11.5px;color:var(--muted);line-height:1.3;margin-top:2px}
+.opt.on{background:var(--ink);color:#fff;box-shadow:3px 3px 0 var(--red)}
+.opt.on span{color:#cfcfcf}
+.capbase{display:flex;gap:10px;align-items:center;border:2px solid var(--ink);padding:9px 10px;cursor:pointer;background:#fff;width:100%;text-align:left;margin-bottom:10px}
+.capbase .box{width:18px;height:18px;border:2px solid var(--ink);flex:none;display:grid;place-items:center;font-size:12px}
+.capbase.on{background:var(--ink);color:#fff}.capbase.on .box{border-color:#fff}
+.cats{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px;max-height:310px;overflow:auto;padding-right:4px}
+@media(max-width:520px){.cats{grid-template-columns:minmax(0,1fr)}}
+.cat{border:1.5px solid #999;background:#fff;padding:7px 8px;text-align:left;cursor:pointer;min-width:0;position:relative}
+.cat b{display:block;font-size:12.5px;line-height:1.25}
+.cat .k{display:block;font-size:11px;color:var(--muted);line-height:1.3}
+.cat .c{display:block;font-family:var(--pix);font-size:9.5px;margin-top:3px;color:var(--ink2)}
+.cat.on{border:2px solid var(--red);background:var(--pink);box-shadow:2px 2px 0 var(--red)}
+.cat .own{position:absolute;top:4px;right:4px;font-family:var(--pix);font-size:8.5px;background:var(--green);color:#fff;padding:1px 4px}
+.lbl{font-family:var(--pix);font-size:10.5px;color:var(--muted);margin:10px 0 5px;display:flex;justify-content:space-between}
+.sl{display:grid;grid-template-columns:90px minmax(0,1fr) 64px;gap:10px;align-items:center;margin:4px 0}
+.sl label{font-size:12.5px;font-weight:600}
+.sl output{font-family:var(--pix);font-size:12px;text-align:right;font-variant-numeric:tabular-nums}
+input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:6px;background:linear-gradient(to right,var(--red) 0 var(--p,50%),#ddd var(--p,50%));border:1px solid var(--ink);outline-offset:4px}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:16px;height:20px;background:var(--ink);border:2px solid #fff;box-shadow:2px 2px 0 var(--red);cursor:pointer}
+input[type=range]::-moz-range-thumb{width:14px;height:18px;background:var(--ink);border:2px solid #fff;border-radius:0;cursor:pointer}
+.foot{font-size:11px;color:#9a9a9a;margin-top:4px}
+.pol{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}
+.whatif{background:var(--ink);color:#fff;padding:12px 14px;border-top:3px solid var(--red)}
+.whatif .wt{font-family:var(--pix);font-size:11px;color:#ff9aa0;margin-bottom:8px;display:flex;justify-content:space-between;gap:6px;flex-wrap:wrap}
+.wg{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+@media(max-width:520px){.wg{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.wg div{background:#222;padding:7px 8px;min-width:0}
+.wg i{display:block;font-style:normal;font-size:10.5px;color:#aaa;line-height:1.25}
+.wg b{font-family:var(--pix);font-size:14px;font-weight:400;font-variant-numeric:tabular-nums}
+.bar2{height:10px;background:#333;position:relative;margin-top:10px}
+.bar2 .a{position:absolute;left:0;top:0;bottom:0;background:var(--green)}
+.bar2 .m{position:absolute;top:-4px;bottom:-4px;width:2px;background:#fff}
+.warn{font-size:12px;color:var(--amber);margin-top:8px}
+.send{display:flex;gap:10px;align-items:center;flex-wrap:wrap;padding:12px 14px;border-top:2px solid var(--ink);background:var(--soft)}
+.send .miss{font-size:12px;color:var(--red2)}
+
+/* ---------- TRANSICIONES ---------- */
+.inter{min-height:70vh;display:grid;place-items:center;text-align:center;padding:40px 16px}
+.inter .env{font-family:var(--disp);font-size:clamp(40px,7vw,80px);margin:8px 0;font-weight:400}
+.postit{display:inline-block;background:#ffe866;color:var(--ink);padding:10px 14px;transform:rotate(-2deg);box-shadow:3px 3px 0 rgba(0,0,0,.2);font-family:var(--pix);font-size:12px;margin-top:14px}
+.flash{animation:fl 1.6s steps(8) both}
+@keyframes fl{0%{opacity:0;transform:translateY(8px) rotate(-2deg)}20%,80%{opacity:1;transform:none rotate(-2deg)}100%{opacity:.0}}
+.brief{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:22px;padding-block:22px 40px}
+@media(max-width:900px){.brief{grid-template-columns:minmax(0,1fr)}}
+.dlg{border:3px solid var(--ink);box-shadow:6px 6px 0 var(--red);padding:18px}
+.dlg h2{font-family:var(--disp);font-size:40px;margin:0 0 8px;font-weight:400}
+.dlg ul{padding-left:18px;margin:8px 0}
+.dlg li{margin:4px 0}
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:60;display:grid;place-items:center;padding:16px}
+.modal .mb{background:#fff;border:3px solid var(--ink);box-shadow:8px 8px 0 var(--red);max-width:720px;width:100%;max-height:86vh;overflow:auto;padding:18px}
+
+/* ---------- RESULTADOS ---------- */
+.hero{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:20px;align-items:center;padding-block:26px;border-bottom:3px solid var(--ink)}
+@media(max-width:760px){.hero{grid-template-columns:minmax(0,1fr)}}
+.hero canvas{width:120px;height:120px;image-rendering:pixelated;border:3px solid var(--ink);box-shadow:5px 5px 0 var(--red)}
+.hero h1{font-family:var(--disp);font-size:clamp(44px,7vw,86px);margin:4px 0;font-weight:400;line-height:.9;text-wrap:balance}
+.verdict{display:inline-block;font-family:var(--pix);font-size:12px;padding:4px 10px;color:#fff}
+.v-ok{background:var(--green)}.v-bad{background:var(--red)}.v-mid{background:var(--amber);color:var(--ink)}
+.big{font-family:var(--disp);font-size:96px;line-height:.85;text-align:right}
+.big small{display:block;font-family:var(--pix);font-size:11px;color:var(--muted)}
+.rgrid{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr);gap:22px;padding-block:22px}
+@media(max-width:900px){.rgrid{grid-template-columns:minmax(0,1fr)}}
+.sbar{margin:8px 0}
+.sbar .l{display:flex;justify-content:space-between;font-size:13px;font-weight:600}
+.sbar .tr{height:12px;border:2px solid var(--ink);background:#fff;margin-top:3px}
+.sbar .fi{height:100%;background:var(--red)}
+.kpis{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px}
+.kpi{border:2px solid var(--ink);padding:8px 10px}
+.kpi i{display:block;font-style:normal;font-size:11.5px;color:var(--muted);line-height:1.25}
+.kpi b{font-family:var(--disp);font-size:30px;font-weight:400;font-variant-numeric:tabular-nums}
+.traits{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+h3.rt{font-family:var(--disp);font-size:34px;font-weight:400;margin:26px 0 10px;border-bottom:3px solid var(--ink)}
+.pcase{border:2px solid var(--ink);margin-bottom:12px;break-inside:avoid}
+.pcase>summary{list-style:none;cursor:pointer;display:grid;grid-template-columns:34px minmax(0,1fr) auto;gap:10px;align-items:center;padding:10px 12px;background:var(--soft)}
+.pcase>summary::-webkit-details-marker{display:none}
+.pcase .num{font-family:var(--disp);font-size:28px;color:var(--red)}
+.pcase .nm{font-weight:700;line-height:1.25}
+.pcase .nm small{display:block;font-weight:400;color:var(--muted);font-size:12px}
+.pcase .sc{font-family:var(--disp);font-size:28px;text-align:right}
+.pcase .body{padding:12px 14px;display:grid;gap:12px}
+.cmp{width:100%;border-collapse:collapse;font-size:13px}
+.cmp th,.cmp td{border:1px solid var(--line);padding:6px 8px;text-align:left;vertical-align:top}
+.cmp th{background:var(--soft);font-family:var(--pix);font-size:10px;font-weight:400}
+.tw{overflow-x:auto}
+.dx{list-style:none;padding:0;margin:0;display:grid;gap:5px}
+.dx li{display:grid;grid-template-columns:22px 92px minmax(0,1fr);gap:6px;font-size:13.5px;align-items:start}
+.dx .ic{font-family:var(--pix);font-weight:700}
+.dx .ic.y{color:var(--green)}.dx .ic.n{color:var(--red)}.dx .ic.w{color:#b9770e}
+.dx .d{font-family:var(--pix);font-size:9.5px;background:var(--ink);color:#fff;padding:2px 4px;text-align:center}
+.voice{border-left:4px solid var(--ink);padding:6px 10px;background:var(--soft);font-size:13.5px}
+.voice b{font-family:var(--pix);font-size:10.5px;font-weight:400;color:var(--red2)}
+.quiz .q{margin:10px 0}
+.quiz .q p{font-weight:600;margin:0 0 6px}
+.quiz .q .opts{display:flex;flex-wrap:wrap;gap:6px}
+.quiz .q button{border:2px solid var(--ink);background:#fff;padding:5px 10px;cursor:pointer;font-size:13px}
+.quiz .q button.right{background:var(--green);color:#fff;border-color:var(--green)}
+.quiz .q button.wrong{background:var(--red);color:#fff;border-color:var(--red)}
+.auths{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:10px}
+.auth{border:2px solid var(--ink);padding:10px}
+.auth b{font-family:var(--disp);font-size:24px;font-weight:400;display:block}
+.auth span{font-size:12.5px;color:var(--ink2)}
+.disc{font-size:11.5px;color:var(--muted);margin:22px 0 40px;max-width:110ch}
+.actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}
+@media print{
+ .hud,.no-print,body::before{display:none!important}
+ .pcase>summary{background:#f3f3f3!important}
+ .btn{display:none}
+ .pcase{page-break-inside:avoid}
+ body{font-size:11.5px}
+ .hero canvas{box-shadow:none}
+ *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+@media(max-width:700px){.hud{position:static}.hud .stats{margin-left:0}}
+/* ===== v2 ===== */
+.px{image-rendering:pixelated;image-rendering:crisp-edges}
+.kicker{font-family:var(--pix);font-size:11.5px;color:var(--red);letter-spacing:.06em;text-transform:uppercase}
+.h3{font-family:var(--disp);font-size:26px;line-height:1;font-weight:400}
+.hud img{border:2px solid #fff;background:#fff}
+/* creador */
+.creator{display:grid;grid-template-columns:minmax(0,.8fr) minmax(0,1.2fr);gap:28px;padding-block:32px 48px;align-items:start}
+@media(max-width:820px){.creator{grid-template-columns:minmax(0,1fr)}}
+.cpv{border:3px solid var(--ink);box-shadow:8px 8px 0 var(--red);padding:18px;display:flex;flex-direction:column;align-items:center;gap:12px;background:linear-gradient(#f6f5f3 0 70%,#e4dfd6 70%)}
+.cpv canvas{max-width:100%;height:auto}
+.badge{display:flex;gap:10px;align-items:center;border:2px solid var(--ink);background:#fff;padding:8px 12px;width:100%}
+.badge b{display:block;font-family:var(--disp);font-size:24px;font-weight:400;line-height:1}.badge span{font-size:12px;color:var(--muted)}
+.cop h2{font-size:52px;margin:0;font-weight:400}
+.cg{margin:14px 0}.cl{display:block;font-family:var(--pix);font-size:11px;color:var(--muted);margin-bottom:6px}
+.seg2{display:flex;flex-wrap:wrap;gap:6px}.seg2 button{border:2px solid var(--ink);background:#fff;padding:7px 12px;cursor:pointer;font-weight:600}
+.seg2 button.on{background:var(--ink);color:#fff;box-shadow:3px 3px 0 var(--red)}
+.sw{display:flex;gap:8px;flex-wrap:wrap}.swc{width:32px;height:32px;border:2px solid var(--ink);cursor:pointer}.swc.on{outline:3px solid var(--red);outline-offset:2px}
+/* mentores */
+.mentors{display:flex;flex-wrap:wrap;gap:6px;align-items:stretch;margin:0 0 14px}
+.mface{border:2px solid var(--ink);background:#fff;padding:4px 6px 3px;display:flex;flex-direction:column;align-items:center;gap:2px;cursor:pointer;font-family:var(--pix);font-size:9.5px;min-width:64px}
+.mface.on{background:var(--ink);color:#fff;box-shadow:3px 3px 0 var(--red)}
+.mentors.big .mface{font-size:10px;min-width:92px}
+.bubble{flex:1 1 320px;border:2px solid var(--ink);background:#fffbe6;padding:8px 12px;font-size:13.5px;position:relative;min-width:0}
+.bubble b{font-family:var(--pix);font-size:10.5px;font-weight:400;color:var(--red2);display:block}
+.brief .bubble{margin-top:8px}
+.hots .mbtn{display:inline-flex;align-items:center;gap:6px;background:#fffbe6}
+/* RFP y reunión */
+.rfp h4{font-family:var(--pix);font-size:11px;font-weight:400;color:var(--red2);margin:12px 0 2px;text-transform:uppercase}
+.rfp p{margin:0;max-width:72ch}.rfp ul{margin:2px 0;padding-left:18px}
+.rfp .rh{border-bottom:2px solid var(--ink);padding-bottom:6px;display:flex;flex-direction:column}
+.rfp .quote{border-left:4px solid var(--ink);padding:4px 10px;margin:8px 0;background:var(--soft);font-style:italic}
+.qa{border:2px solid var(--ink);margin-bottom:6px}
+.qa button{width:100%;text-align:left;border:0;background:#fff;padding:8px 10px;cursor:pointer;font-weight:600}
+.qa button:disabled{cursor:default;color:var(--muted)}.qa.asked button{background:var(--ink);color:#fff}
+.qa p{margin:0;padding:8px 10px;background:var(--pink)}
+.wbsT{font-size:12.5px;margin-top:6px;background:var(--soft);padding:6px 8px;border:1px solid var(--line)}
+.rk{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:8px}
+.rk button{border:1.5px solid #999;background:#fff;padding:5px 8px;font-size:12px;cursor:pointer}
+.rk button.on{border:2px solid var(--red);background:var(--pink);font-weight:700}
+.sl label{font-size:12px}
+.foot{display:flex;align-items:center;gap:6px;flex-wrap:wrap}.foot img{border:1px solid var(--line);background:#fff}
+/* negociación */
+.nego{padding-block:28px 40px;max-width:880px}
+.mail2{border:3px solid var(--ink);box-shadow:8px 8px 0 var(--ink);padding:18px;background:#fff}
+.mail2 .mh{border-bottom:2px solid var(--ink);padding-bottom:6px;margin-bottom:10px;display:flex;flex-direction:column}
+.mail2 p{font-size:17px;margin:0 0 12px}
+.prop{display:flex;flex-wrap:wrap;gap:6px;align-items:center;font-size:13px}.prop span{font-family:var(--pix);font-size:10.5px;color:var(--muted)}
+.prop b{border:1px solid var(--line);padding:3px 8px;background:var(--soft)}
+.cred{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-top:10px;font-size:12.5px}
+.cred .y,.cred .n{padding:2px 8px;border:1.5px solid}.cred .y{border-color:var(--green);color:#1d6b3c}.cred .y::before{content:'✓ '}.cred .n{border-color:#bbb;color:var(--muted)}.cred .n::before{content:'– '}
+.nopts{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:8px}
+.nopts .opt{padding:12px}
+.postit{display:inline-flex;align-items:center;gap:10px}
+/* cierre estilo plantilla */
+.panel{border:2px solid var(--ink);background:#fff;box-shadow:6px 6px 0 var(--ink)}
+.panel .ph{border-bottom:2px solid var(--ink);padding:10px 14px;display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+.qbadge{font-family:var(--disp);background:var(--ink);color:#fff;font-size:22px;padding:2px 10px 0;flex:none}
+.kpis5{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px;margin:14px 0 20px}
+.execs{display:grid;gap:18px}
+.exec .et{flex:1;min-width:0;display:flex;flex-direction:column}.exec .et b{font-size:15px}.exec .et small{color:var(--muted)}
+.exec .eb{padding:12px 14px;display:grid;gap:10px}
+.erow{display:grid;grid-template-columns:60px minmax(0,1fr) minmax(150px,auto);gap:12px;align-items:center;font-size:14px}
+@media(max-width:620px){.erow{grid-template-columns:52px minmax(0,1fr)}.erow .ev{grid-column:1/-1}}
+.el{font-family:var(--pix);font-size:11px}
+.trk{position:relative;height:22px;background:#fff}
+.trk .pl{position:absolute;inset:0 auto 0 0;border:2px dashed #8a8a8a}
+.trk .ac{position:absolute;left:0;top:5px;bottom:5px;width:0;transition:width 1s cubic-bezier(.2,.8,.2,1)}
+.trk .ac.grow{width:var(--w)}
+.ac.st-ok{background:var(--green)}.ac.st-warn{background:var(--amber)}.ac.st-bad{background:var(--red)}
+.chip.st-ok{border-color:var(--green);color:#1d6b3c}.chip.st-warn{border-color:#b9770e;color:#8a5a0a}.chip.st-bad{border-color:var(--red);color:var(--red2)}
+.ind{display:flex;flex-wrap:wrap;gap:6px}
+.enotes{margin:0;padding-left:18px;font-size:13.5px;display:grid;gap:3px}
+/* informe */
+.hbust{width:128px;height:128px;border:3px solid var(--ink);box-shadow:5px 5px 0 var(--red);background:#f6f5f3}
+.rgrid svg{width:100%;height:auto;max-width:420px;display:block;margin:0 auto}
+.dtab{display:flex;flex-wrap:wrap;gap:6px;padding:0 14px 14px;font-size:12.5px}.dtab span{border:1px solid var(--line);padding:2px 8px}
+.voice{display:flex;gap:10px;align-items:flex-start}.voice img{flex:none;border:2px solid var(--ink);background:#fff}
+.voice.bl{border-left-color:var(--blue)}.voice.bl b{color:var(--blue)}
+.auth{display:flex;gap:10px;align-items:flex-start}.auth img{flex:none;border:2px solid var(--ink)}
+.quiz .q button{display:inline-flex;align-items:center;gap:6px}
+
+.brief .bubble{flex:none}
+.sl{grid-template-columns:128px minmax(0,1fr) 64px}
+@media(max-width:520px){.sl{grid-template-columns:96px minmax(0,1fr) 56px}}
+</style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+</head>
+<body>
+<div id="intro" hidden>
+ <div class="stage" aria-hidden="true"></div>
+ <div class="ov">
+  <div class="top"><span class="kick">INGENIERÍA DE SOFTWARE II · ESTIMACIÓN Y PMBOK 8</span><span class="kick">AUTOMATIZACIÓN · SENSORES · IA · SALUD</span></div>
+  <div><div class="fallback" aria-hidden="true">XPERTA</div>
+  <div class="panel">
+   <h1>Automatizamos lo que otros no se atreven a estimar</h1>
+   <p class="tag">XPerta acaba de contratarte para dirigir la estimación de sus nuevos contratos. Visitarás clientes, harás preguntas, estimarás, armarás equipos y negociarás. Cada decisión mueve dinero, plazos y reputación.</p>
+   <div class="rules"><div><b>5 DE 15</b>Solicitudes sorteadas para ti, cada una con dos posibles realidades. Ningún compañero tendrá la misma partida.</div><div><b>SIN PISTAS</b>Nadie te dirá si acertaste hasta el cierre del trimestre.</div><div><b>EXPLORAR PAGA</b>Investigar y escribir tus supuestos reduce la incertidumbre.</div></div>
+   <div class="row"><label for="nm" class="kick" style="flex-basis:100%">TU NOMBRE</label><input id="nm" maxlength="40" autocomplete="name" placeholder="Nombre y apellido"><button class="btn" id="go">Entrar a XPerta ▸</button></div>
+   <p class="hint">Duración: 35–45 min · Necesitas internet para investigar 3 de los contratos · Al final podrás guardar tu informe en PDF.</p>
+  </div></div>
+ </div>
+</div>
+<div id="app"></div>
+<script>/* ===== XPerta v2 · datos + motor de simulación (sin DOM; navegador y Node) ===== */
+(function(root){
+'use strict';
+const N_CASES=5, N_RES=3;            // contratos por partida y cuántos son de dominio nuevo (investigación)
+const RS=17, RJ=9, PS=1.25, PJ=0.7;   // costo COP M/mes y productividad relativa: senior / junior
+const MGMT=0.10;                      // gestión del proyecto: 10 % sobre el desglose
+const START_CASH=600, START_REP=70, BENCH=3, WK=4.33;
+const LV=['','Baja','Media','Alta','Muy alta'];
+const SPEC={
+ S_REG:{n:'Asuntos regulatorios de dispositivos médicos',k:'IEC 62304 · ISO 14971 · INVIMA',c:26,f:18,l:8,g:0.6,crit:'hallazgo regulatorio: el software no podía usarse clínicamente sin su expediente técnico'},
+ S_CLIN:{n:'Asesor clínico (médico especialista)',k:'Validación clínica · flujos asistenciales',c:24,f:6,l:3,g:0.3},
+ S_ML:{n:'Científico de datos / visión por computador',k:'Modelos ML · datasets · validación',c:22,f:12,l:6,g:0.45},
+ S_LLM:{n:'Ingeniero de IA generativa',k:'LLM · RAG · evaluación y guardarraíles',c:24,f:12,l:6,g:0.4},
+ S_EMB:{n:'Ingeniero de firmware e IoT',k:'Electrónica · protocolos · energía en campo',c:18,f:9,l:5,g:0.4},
+ S_PLC:{n:'Ingeniero de automatización industrial',k:'PLC · SCADA · OPC UA',c:18,f:9,l:4,g:0.45},
+ S_EX:{n:'Ingeniero de instrumentación Ex',k:'Atmósferas explosivas · seguridad intrínseca',c:22,f:12,l:8,g:0.6,crit:'hallazgo de seguridad: equipos sin certificación Ex no podían operar bajo tierra'},
+ S_GEO:{n:'Geotecnista',k:'Estabilidad de laderas · umbrales de lluvia',c:20,f:6,l:4,g:0.5,crit:'falsas alarmas: los umbrales no tenían sustento geotécnico'},
+ S_AGR:{n:'Agrónomo especialista en riego',k:'Requerimiento hídrico · fenología',c:14,f:4,l:3,g:0.3},
+ S_LEG:{n:'Desarrollador de sistemas heredados',k:'AS/400 · mainframe · RPG/COBOL',c:20,f:10,l:6,g:0.45},
+ S_ROB:{n:'Integrador de robótica móvil',k:'AMR · gestión de flota · seguridad',c:22,f:10,l:6,g:0.5},
+ S_SEC:{n:'Ciberseguridad y protección de datos',k:'Ley 1581 · cifrado · auditoría',c:22,f:10,l:5,g:0.3,crit:'incidente de privacidad: datos sensibles sin controles adecuados'},
+ S_QA:{n:'DevOps y pruebas de rendimiento',k:'CI/CD · pruebas automatizadas · carga',c:16,f:6,l:3,g:0.35},
+ S_MET:{n:'Metrología y validación de sistemas',k:'Calibración trazable · integridad de datos',c:18,f:6,l:4,g:0.3,crit:'el registro de temperatura no fue aceptado como evidencia en la auditoría'}
+};
+const EQ={
+ E_RPA:{n:'Licencias de orquestador RPA (1 año)',c:40,l:2,g:0.2},
+ E_GPU:{n:'Capacidad GPU para entrenamiento (nube reservada)',c:55,l:1,g:0.25},
+ E_CAM:{n:'Cámaras industriales, óptica e iluminación',c:70,l:6,g:0.3},
+ E_LORA:{n:'Kit piloto LoRaWAN (gateways AU915 + nodos)',c:45,l:6,g:0.2},
+ E_EXS:{n:'Detectores de gas certificados Ex + calibración',c:120,l:10,g:0.35,crit:'sin detectores certificados Ex la instalación no podía operar'},
+ E_HIL:{n:'Banco de pruebas HIL / simulador de PLC',c:50,l:4,g:0.25},
+ E_LOG:{n:'Data loggers de temperatura calibrados',c:30,l:4,g:0.2},
+ E_WEAR:{n:'Dispositivos médicos conectados para piloto',c:60,l:8,g:0.25},
+ E_AMR:{n:'Robots AMR de prueba + gestor de flota',c:180,l:12,g:0.35},
+ E_VIB:{n:'Acelerómetros industriales + adquisición de datos',c:40,l:5,g:0.25},
+ E_SOIL:{n:'Sondas de humedad de suelo + estación meteorológica',c:35,l:5,g:0.2},
+ E_LOAD:{n:'Plataforma de pruebas de carga en la nube',c:15,l:1,g:0.15},
+ E_GEOI:{n:'Inclinómetros, piezómetros y pluviómetros telemétricos',c:110,l:10,g:0.35}
+};
+
+
+const COMP=[['lev','Levantamiento y diseño'],['int','Integraciones y datos'],['dev','Desarrollo de software'],['hw','Hardware, campo e instalación'],['qa','Pruebas, validación y certificación'],['dep','Despliegue, capacitación y soporte']];
+const APPR={pred:{n:'Predictivo',d:'Todo se planifica al inicio; una entrega final',ov:1.0,mit:1.0},
+ inc:{n:'Incremental por fases',d:'Entregas parciales con alcance definido por fase',ov:1.03,mit:0.85},
+ agil:{n:'Ágil iterativo',d:'Iteraciones cortas y re-planificación continua',ov:1.05,mit:0.75},
+ pil:{n:'Piloto y escalamiento',d:'Prueba en un sitio o línea antes de desplegar',ov:1.06,mit:0.7}};
+const RISK={REG:'Requisitos regulatorios o de certificación',DAT:'Calidad o disponibilidad de los datos',LEG:'Sistemas heredados o sin documentación',
+ SUP:'Suministro e importación de hardware',CON:'Conectividad en campo',SAF:'Seguridad física de las personas',PER:'Rendimiento y picos de carga',
+ PRI:'Privacidad y datos sensibles',TAL:'Escasez de talento especializado',ADO:'Adopción por parte de los usuarios',OPE:'Interrupción de la operación del cliente',SCO:'Alcance ambiguo o cambiante'};
+const POLS={ampliar:['Sumar personas','Ampliar el equipo en cuanto haya retraso'],extra:['Horas extra','Acelerar con el mismo equipo'],alcance:['Negociar alcance','Entregar menos para cumplir la fecha'],replan:['Re-planificar','Mover la línea base con el cliente']};
+const CASES=[
+{id:'rpa',t:'Conciliación bancaria automática',cli:'Cooperativa Financiera Altiplano',city:'Tunja',sec:'Servicios financieros',scene:'office',
+ brief:'Cada mes nuestro equipo contable dedica cinco días a conciliar los movimientos de las cuentas bancarias contra el core de la cooperativa. Queremos automatizarlo antes del cierre anual. Nos dijeron que "un robot" lo resuelve en pocas semanas. ¿Cuánto costaría y en cuánto tiempo?',
+ hot:[{n:'Servidor del core',sp:'rack',A:'Etiqueta en el rack: "Core v8 — API REST documentada (OpenAPI 3)". El jefe de TI te muestra el portal de desarrolladores.',B:'Una terminal de pantalla verde (5250) conectada a un AS/400. El core está escrito en RPG y nadie lo modifica desde 2011.'},
+  {n:'Analista contable',sp:'person',A:'"Recibimos extractos de 4 bancos, todos en CSV con el mismo formato."',B:'"Son 14 bancos. Cada uno manda un formato distinto y dos solo envían PDF."'},
+  {n:'Tablero de volumen',sp:'board',tx:'≈ 9.000 movimientos diarios. Cierre contable: día 5 de cada mes.'},
+  {n:'Política de TI',sp:'papers',A:'"Se permite integración por API con token y tenemos ambiente de pruebas."',B:'"Cualquier cambio en el core lo hace el proveedor externo, con 6 semanas de aviso. No hay ambiente de pruebas."'}],
+ hist:[{n:'Conciliación por API con core moderno · cooperativa de ahorro (2025)',e:11,note:'4 personas · 5 meses'},{n:'Robot sobre AS/400 con 9 bancos · aseguradora (2024)',e:24,note:'Se estimaron 13 PM; los formatos de cada banco duplicaron el trabajo'}],
+ vars:{A:{lvl:2,eff:10,s:[],e:[],okE:['E_RPA'],why:'El core tiene API documentada y los extractos llegan en formato estándar: es una integración de datos que el equipo inicial resuelve.'},
+       B:{lvl:3,eff:22,s:['S_LEG'],e:['E_RPA'],why:'Sin API, la única vía es automatizar pantallas de un AS/400 y normalizar 14 formatos bancarios: se necesita experiencia en sistemas heredados y una plataforma RPA.'}}},
+{id:'fact',t:'Procesamiento de facturas de proveedores',cli:'Distribuidora Caribe Frío',city:'Barranquilla',sec:'Logística',scene:'office',
+ brief:'Recibimos unas 6.000 facturas al mes y las digitamos a mano en el ERP. Queremos "un OCR con inteligencia artificial" que lea todo automáticamente y lo cruce con las órdenes de compra.',
+ hot:[{n:'Bandeja de facturación',sp:'pc',A:'Casi todos los correos traen un .zip con un XML y un PDF de la misma factura.',B:'Además de facturas llegan fotos de celular de remisiones firmadas a mano, muchas arrugadas o borrosas.'},
+  {n:'Jefe de cuentas por pagar',sp:'person',A:'"Nuestros proveedores ya facturan electrónicamente ante la DIAN. El problema es que alguien copia los datos al ERP."',B:'"La factura no es el problema: es cruzarla con la remisión en papel que firma el conductor de cada uno de nuestros 300 transportadores."'},
+  {n:'Archivo físico',sp:'papers',A:'Cajas de 2019. El jefe aclara: "eso no hay que digitalizarlo".',B:'Llegan unas 40.000 remisiones en papel al mes.'},
+  {n:'ERP',sp:'rack',tx:'SAP Business One con Service Layer (API REST) habilitado.'}],
+ hist:[{n:'Lectura de XML de factura electrónica DIAN · distribuidora (2025)',e:6,note:'3 personas · 4 meses'},{n:'Digitalización de documentos manuscritos con IA · transportadora (2024)',e:19,note:'Requirió científico de datos y etiquetado de 8.000 imágenes'}],
+ tip:'Antes de comprar "IA", averigua en qué formato llega hoy una factura electrónica en Colombia.',
+ vars:{A:{lvl:1,eff:6,s:[],e:[],why:'La factura electrónica de la DIAN ya es un XML estructurado (estándar UBL 2.1): no hace falta OCR ni IA, basta leer el XML.'},
+       B:{lvl:3,eff:18,s:['S_ML'],e:[],okE:['E_GPU'],why:'Las remisiones manuscritas sí exigen OCR/IDP con modelos entrenados y validación humana: hace falta un científico de datos.'}}},
+{id:'vib',t:'Mantenimiento predictivo de motores',cli:'Cementos del Magdalena',city:'Puerto Nare',sec:'Manufactura pesada',scene:'factory',
+ brief:'Una falla en un motor de molino nos para la planta un día entero. Queremos un sistema que prediga las fallas antes de que ocurran. Tenemos unos 40 motores críticos.',
+ hot:[{n:'Motor del molino 2',sp:'motor',A:'Tiene un sensor de vibración atornillado y cableado al tablero.',B:'Ningún sensor. Solo la placa: 75 kW, 1.780 rpm.'},
+  {n:'Sala de control',sp:'monitor',A:'El historiador del SCADA guarda la vibración RMS de cada motor cada minuto desde 2023.',B:'El SCADA solo registra encendido/apagado y corriente.'},
+  {n:'Jefe de mantenimiento',sp:'person',o:{helmet:1},A:'"Ya medimos todo. Queremos que los datos nos avisen."',B:'"Hoy cambiamos rodamientos por calendario; las fallas nos sorprenden."'},
+  {n:'Afiche en la pared',sp:'poster',tx:'"Severidad de vibración — ISO 20816". Alguien subrayó en rojo la zona C.'}],
+ hist:[{n:'Modelo predictivo con datos históricos existentes · ingenio azucarero (2025)',e:13,note:'Con científico de datos'},{n:'Instrumentación + modelo desde cero, 35 motores · papelera (2023)',e:30,note:'Hubo que comprar acelerómetros y montar la red de sensores'}],
+ vars:{A:{lvl:2,eff:14,s:['S_ML'],e:[],ok:['S_PLC'],why:'Los datos ya existen: el reto es el modelo predictivo, que requiere un científico de datos.'},
+       B:{lvl:3,eff:30,s:['S_ML','S_EMB'],e:['E_VIB'],ok:['S_PLC'],why:'No hay sensores ni historia: hay que instrumentar 40 motores, montar la red y acumular datos antes de modelar.'}}},
+{id:'vis',t:'Inspección visual de calidad en línea',cli:'Envases Andinos',city:'Itagüí',sec:'Empaques',scene:'factory',
+ brief:'Queremos detectar defectos con cámaras e inteligencia artificial en nuestra línea de envasado y sacar automáticamente las unidades defectuosas.',
+ hot:[{n:'Banda transportadora',sp:'conveyor',A:'Pasa más o menos una botella por segundo.',B:'Las botellas pasan tan rápido que se ven borrosas: unas 10 por segundo.'},
+  {n:'Muestra de defecto',sp:'sample',A:'Etiqueta faltante o torcida: se ve a simple vista.',B:'Una microfisura de 0,2 mm en la tapa. Con la luz de la planta casi no se ve.'},
+  {n:'Jefa de calidad',sp:'person',A:'"Hoy un operario revisa y casi siempre acierta; queremos apoyarlo."',B:'"Nuestro cliente exige cero tapas fisuradas: nos devolvió un lote completo."'},
+  {n:'Ventanal',sp:'window',tx:'Por la tarde el sol entra directo sobre la línea y cambia la iluminación.'}],
+ hist:[{n:'Verificación de etiquetas con cámara inteligente · bebidas (2024)',e:9,note:'Cámaras + iluminación; sin modelos propios'},{n:'Detección de defectos finos a alta velocidad · autopartes (2025)',e:29,note:'Científico de datos, GPU y seis semanas capturando imágenes'}],
+ vars:{A:{lvl:2,eff:10,s:[],e:['E_CAM'],ok:['S_ML'],why:'Defectos grandes a baja velocidad: cámaras con iluminación controlada y reglas de visión bastan.'},
+       B:{lvl:4,eff:28,s:['S_ML'],e:['E_CAM','E_GPU'],why:'Defectos de 0,2 mm a 10 unidades por segundo exigen óptica e iluminación especializadas, modelos entrenados y cómputo GPU.'}}},
+{id:'plc',t:'Integración de planta con el ERP',cli:'Lácteos La Sabana',city:'Chía',sec:'Alimentos',scene:'factory',
+ brief:'Queremos que las órdenes de producción del ERP lleguen solas a la planta y que los consumos y la producción real regresen al ERP sin digitarlos.',
+ hot:[{n:'Tablero eléctrico',sp:'cabinet',A:'PLC con puerto Ethernet y licencia "OPC UA Server" activa.',B:'Tres PLC de marcas distintas; uno solo tiene puerto serie RS-485 y el manual está fotocopiado en alemán.'},
+  {n:'Ingeniero de planta',sp:'person',o:{helmet:1},A:'"Yo los acompaño: conozco cada variable del PLC y la documentación está al día."',B:'"El que programó los PLC se pensionó y no dejó documentación."'},
+  {n:'Calendario de producción',sp:'calendar',A:'Paradas programadas todos los domingos.',B:'Operación 24/7: "no podemos parar la línea para probar".'},
+  {n:'ERP',sp:'pc',tx:'El ERP recibe y publica órdenes de producción por API REST.'}],
+ hist:[{n:'Lectura OPC UA hacia ERP · bebidas (2025)',e:9,note:'Con apoyo del ingeniero de planta del cliente'},{n:'Integración de PLC heredados multimarca · textiles (2024)',e:23,note:'Hubo que simular los PLC para probar sin detener producción'}],
+ vars:{A:{lvl:2,eff:10,s:[],e:[],ok:['S_PLC'],okE:['E_HIL'],why:'OPC UA es un estándar abierto ya habilitado y el cliente aporta su ingeniero: el equipo inicial puede integrarlo.'},
+       B:{lvl:3,eff:22,s:['S_PLC'],e:['E_HIL'],why:'Protocolos propietarios sin documentación y sin ventanas de parada: se necesita un ingeniero de automatización y un banco de pruebas para no arriesgar la producción.'}}},
+{id:'bot',t:'Asistente virtual de atención',cli:'Seguros Horizonte',city:'Bogotá',sec:'Seguros',scene:'office',
+ brief:'Queremos un asistente con inteligencia artificial en WhatsApp que responda a nuestros clientes las 24 horas y descongestione el call center.',
+ hot:[{n:'Buzón de PQRS',sp:'pc',A:'La mayoría pregunta horarios, requisitos y puntos de atención.',B:'"¿Mi póliza cubre esta cirugía?", "¿en qué va mi reclamación?", "adjunto mi historia clínica".'},
+  {n:'Abogada de la compañía',sp:'person',A:'"Solo información pública; nada de datos de clientes."',B:'"Va a manejar datos de salud, que son datos sensibles según la Ley 1581 de 2012. Y no puede inventar coberturas."'},
+  {n:'Core de pólizas',sp:'rack',A:'"No hace falta conectarlo."',B:'"Sí: debe consultar pólizas y siniestros en línea."'},
+  {n:'Gerente comercial',sp:'person',tx:'"Lo quiero en WhatsApp antes de la temporada de renovaciones."'}],
+ hist:[{n:'Bot de preguntas frecuentes con IA · caja de compensación (2025)',e:8,note:'Plataforma gestionada; sin datos personales'},{n:'Asistente con acceso a datos de clientes · banco (2025)',e:21,note:'Requirió evaluar alucinaciones y controles de privacidad'}],
+ vars:{A:{lvl:2,eff:8,s:[],e:[],ok:['S_LLM'],why:'Preguntas frecuentes sobre información pública: una plataforma gestionada y buenas pruebas bastan.'},
+       B:{lvl:3,eff:20,s:['S_LLM','S_SEC'],e:[],why:'Datos sensibles de salud, integración con el core y respuestas que comprometen a la aseguradora: hace falta IA generativa con evaluación seria y protección de datos.'}}},
+{id:'cicd',t:'Automatización de pruebas y despliegues',cli:'PagoYa Fintech',city:'Medellín',sec:'Fintech',scene:'office',
+ brief:'Cada despliegue nos cuesta una noche en vela. Queremos automatizar pruebas y despliegues (CI/CD) para salir a producción más seguido y con menos errores.',
+ hot:[{n:'Repositorio',sp:'pc',A:'Un solo repositorio con Dockerfile y pruebas unitarias (40 % de cobertura).',B:'22 repositorios, varios sin pruebas. Un archivo se llama deploy_final_v3_OK.sh.'},
+  {n:'Líder técnico',sp:'person',A:'"Ya desplegamos cada semana; solo queremos quitar los pasos manuales."',B:'"Desplegamos de madrugada, a mano, y cruzamos los dedos."'},
+  {n:'Carpeta de auditoría',sp:'papers',A:'Sin requisitos especiales de auditoría.',B:'El auditor exige trazabilidad de cada cambio que llega a producción.'},
+  {n:'Tablero DORA',sp:'board',tx:'Métricas DORA: frecuencia de despliegue, tiempo de entrega, tasa de fallos y tiempo de recuperación.'}],
+ hist:[{n:'Pipeline para app en contenedores · retail (2025)',e:5,note:'Equipo inicial'},{n:'CI/CD para 18 servicios con auditoría · banco digital (2024)',e:17,note:'Con ingeniero DevOps'}],
+ vars:{A:{lvl:1,eff:6,s:[],e:[],ok:['S_QA'],why:'Un solo servicio ya contenedorizado y con pruebas: es una automatización acotada.'},
+       B:{lvl:3,eff:18,s:['S_QA'],e:[],ok:['S_SEC'],why:'22 servicios sin pruebas y exigencias de auditoría: hay que construir pruebas, pipelines y trazabilidad con experiencia DevOps.'}}},
+{id:'amr',t:'Robots móviles en centro de distribución',cli:'MercaExpress',city:'Funza',sec:'Retail',scene:'warehouse',
+ brief:'Queremos robots que lleven la mercancía de los estantes a la zona de despacho. Necesitamos que estén funcionando antes de la temporada alta.',
+ hot:[{n:'Contrato con proveedor',sp:'papers',A:'"El proveedor instala los robots y su gestor de flota; XPerta solo integra con nuestro WMS."',B:'No hay proveedor elegido: "ustedes recomiendan, compran e integran".'},
+  {n:'Pasillo 4',sp:'amr',A:'Piso epóxico nivelado y zona exclusiva para robots.',B:'Montacargas, personas y robots compartirían el pasillo; el piso tiene grietas.'},
+  {n:'WMS',sp:'pc',A:'WMS en la nube con API REST.',B:'WMS desarrollado en casa en 2008, sin API.'},
+  {n:'Gerente de operaciones',sp:'person',tx:'"La temporada alta empieza en noviembre."'}],
+ hist:[{n:'Integración WMS con flota del proveedor · farmacéutica (2025)',e:11,note:'El proveedor aportó robots y gestor de flota'},{n:'XPerta nunca ha seleccionado ni puesto en marcha robots propios.',e:null,note:'Sin dato histórico'}],
+ vars:{A:{lvl:2,eff:12,s:[],e:[],ok:['S_ROB'],why:'El proveedor asume robots, navegación y seguridad; XPerta integra por API.'},
+       B:{lvl:4,eff:32,s:['S_ROB'],e:['E_AMR'],ok:['S_SEC'],why:'Seleccionar, probar e integrar robots en un espacio compartido con personas exige un integrador de robótica, unidades de prueba y adaptar un WMS sin API.'}}},
+{id:'mat',t:'Sistema de matrícula académica',cli:'Institución Universitaria Nevado',city:'Manizales',sec:'Educación',scene:'office',
+ brief:'Necesitamos un sistema de matrícula en línea: inscripción de asignaturas, horarios y liquidación. Debe estar listo para el próximo periodo.',
+ hot:[{n:'Registro académico',sp:'person',A:'"Hoy matriculamos con formularios y Excel; somos unos 3.000 estudiantes."',B:'"Somos 38.000 estudiantes en 5 sedes."'},
+  {n:'Servidor',sp:'rack',A:'"Un servidor en el campus siempre nos ha bastado."',B:'"El año pasado el sistema anterior se cayó a los 5 minutos de abrir matrículas."'},
+  {n:'Tesorería',sp:'papers',A:'"El pago sigue en el banco, como hoy."',B:'"Debe integrarse con pagos en línea y con créditos educativos."'},
+  {n:'Calendario académico',sp:'calendar',tx:'Las matrículas abren la segunda semana de enero.'}],
+ hist:[{n:'Inscripciones para instituto de 2.500 estudiantes (2024)',e:7,note:'Equipo inicial'},{n:'Portal de pagos con picos de concurrencia · evento masivo (2025)',e:22,note:'Pruebas de carga y DevOps'}],
+ vars:{A:{lvl:1,eff:8,s:[],e:[],why:'Pocos usuarios, una sede y pago externo: es un sistema de información clásico para el equipo inicial.'},
+       B:{lvl:3,eff:24,s:['S_QA'],e:['E_LOAD'],ok:['S_SEC'],why:'Miles de usuarios concurrentes en minutos y pagos en línea: el riesgo está en el rendimiento, que exige pruebas de carga y experiencia DevOps.'}}},
+/* ---------- casos de investigación (dominio nuevo para XPerta) ---------- */
+{id:'card',res:true,t:'Monitoreo remoto de pacientes cardíacos',cli:'Clínica Cardiovascular del Norte',city:'Cúcuta',sec:'Salud',scene:'hospital',
+ brief:'Queremos hacer seguimiento en casa a 400 pacientes con insuficiencia cardíaca para reducir reingresos. Los pacientes registrarían sus datos y el equipo clínico vería la información. Nuestra historia clínica expone una API HL7 FHIR. ¿Lo pueden hacer?',
+ hot:[{n:'Cardióloga',sp:'person',o:{coat:1},A:'"La enfermera revisa los datos y llama al paciente; el sistema no decide nada."',B:'"Quiero que el sistema le indique al paciente cuándo ajustar el diurético según su peso y su presión."'},
+  {n:'Mesa de equipos',sp:'devices',A:'Una báscula doméstica: el paciente digita su peso en la app.',B:'Báscula y tensiómetro Bluetooth, y un parche de ECG continuo.'},
+  {n:'Oficina jurídica',sp:'papers',A:'"Son datos de salud: datos sensibles según la Ley 1581 de 2012."',B:'"Nos preguntan si el software necesitará registro sanitario del INVIMA (Decreto 4725 de 2005)."'},
+  {n:'Sistemas del hospital',sp:'rack',tx:'La historia clínica electrónica expone una API HL7 FHIR. El hospital también reporta al mecanismo de interoperabilidad de historia clínica (IHCE) del Ministerio de Salud.'}],
+ terms:[{t:'Software como dispositivo médico (SaMD)',q:'¿Qué hace que un software deje de ser "una app" y pase a ser dispositivo médico?'},
+  {t:'Decreto 4725 de 2005 (Colombia)',q:'¿Incluye el software en la definición de dispositivo médico? ¿Qué implica el registro sanitario del INVIMA?'},
+  {t:'IEC 62304: clases de seguridad A, B y C',q:'¿De qué depende la clase y cuánto trabajo adicional implica cada una?'},
+  {t:'ISO 14971',q:'¿Qué exige la gestión de riesgos de un dispositivo médico?'},
+  {t:'HL7 FHIR',q:'¿Qué es un recurso FHIR y qué implica integrarse con una historia clínica?'},
+  {t:'Ley 1581 de 2012: datos sensibles',q:'¿Qué obligaciones agrega tratar datos de salud?'}],
+ vars:{A:{lvl:2,eff:14,s:['S_SEC'],e:[],ok:['S_CLIN'],why:'El software registra y muestra datos; la decisión clínica la toma una persona. Aun así trata datos sensibles de salud e integra con FHIR, lo que exige protección de datos.'},
+       B:{lvl:4,eff:40,s:['S_REG','S_CLIN','S_SEC'],e:['E_WEAR'],why:'Un software que indica ajustes de tratamiento a partir de dispositivos conectados tiene finalidad terapéutica: entra en la definición de dispositivo médico del Decreto 4725 de 2005 y exige ciclo de vida IEC 62304, gestión de riesgos ISO 14971 y validación clínica.'}}},
+{id:'reti',res:true,t:'Tamizaje de retinopatía diabética con IA',cli:'Red de Salud del Pacífico',city:'Buenaventura',sec:'Salud',scene:'hospital',
+ brief:'Tenemos miles de pacientes diabéticos que nunca han visto a un oftalmólogo. Queremos usar inteligencia artificial para revisar fotos de la retina y detectar retinopatía a tiempo.',
+ hot:[{n:'Oftalmólogo',sp:'person',o:{coat:1},A:'"Yo sigo firmando cada diagnóstico; solo quiero ver primero los casos más graves."',B:'"En los puestos rurales no hay oftalmólogo: el sistema tendría que darle el resultado al paciente."'},
+  {n:'Archivo de imágenes',sp:'rack',A:'60.000 retinografías ya etiquetadas por dos especialistas.',B:'Hay imágenes, pero sin etiquetar y tomadas con cámaras distintas.'},
+  {n:'Cámara de fondo de ojo',sp:'camera',A:'Retinógrafo de mesa en el hospital, operado por un tecnólogo.',B:'Cámaras portátiles nuevas que manejaría un auxiliar de enfermería.'},
+  {n:'Recorte en el corcho',sp:'poster',tx:'"En 2018 la FDA autorizó el primer sistema de IA que detecta retinopatía diabética sin que un especialista interprete la imagen."'}],
+ terms:[{t:'Tamizaje de retinopatía diabética',q:'¿Quién interpreta hoy las imágenes y con qué criterio?'},
+  {t:'IA autónoma vs. IA de apoyo (priorización)',q:'¿Qué cambia en riesgo y validación si la IA entrega el resultado sin un médico?'},
+  {t:'IDx-DR (FDA, 2018)',q:'¿Cómo se validó clínicamente el primer sistema autónomo?'},
+  {t:'Etiquetado de datasets médicos',q:'¿Quién debe etiquetar imágenes clínicas y cuánto cuesta?'},
+  {t:'IEC 62304 e ISO 14971',q:'¿Aplican a un software que apoya o reemplaza un diagnóstico?'}],
+ vars:{A:{lvl:3,eff:24,s:['S_ML'],e:['E_GPU'],ok:['S_REG','S_CLIN'],why:'Existe un dataset etiquetado y el médico conserva la decisión: es un modelo de priorización exigente pero acotado.'},
+       B:{lvl:4,eff:48,s:['S_ML','S_REG','S_CLIN'],e:['E_GPU'],why:'Un diagnóstico autónomo sin dataset etiquetado exige construir y etiquetar datos, validación clínica prospectiva y un ciclo regulatorio completo.'}}},
+{id:'frio',res:true,t:'Monitoreo de cadena de frío de vacunas',cli:'E.S.E. Valle Verde',city:'Pasto',sec:'Salud pública',scene:'lab',
+ brief:'Perdimos un lote de vacunas porque una nevera falló un fin de semana y nadie se enteró. Queremos sensores que avisen a tiempo y que el registro de temperatura sirva como evidencia.',
+ hot:[{n:'Cuarto frío',sp:'fridge',A:'Cuatro cuartos fríos en la misma bodega central, con WiFi.',B:'"Las neveras están en 120 puestos de salud; en varias veredas no hay señal."'},
+  {n:'Químico farmacéutico',sp:'person',o:{coat:1},A:'"Las vacunas deben mantenerse entre 2 y 8 °C. Necesito alarmas confiables."',B:'"Entre 2 y 8 °C, y en una auditoría debo demostrar que el registro no fue alterado y que los sensores estaban calibrados."'},
+  {n:'Planilla de temperatura',sp:'clip',tx:'Planilla en papel colgada junto a la nevera: la temperatura se anota a mano dos veces al día; los fines de semana está en blanco.'},
+  {n:'Coordinador logístico',sp:'person',A:'"Si suena una alarma, siempre hay alguien a 20 metros."',B:'"Si una nevera falla un viernes en la noche, el puesto está cerrado hasta el lunes."'}],
+ terms:[{t:'Cadena de frío de vacunas (2–8 °C)',q:'¿Qué pasa con una vacuna expuesta fuera de rango y cómo se documenta?'},
+  {t:'Data logger con certificado de calibración',q:'¿Qué es la trazabilidad metrológica de un sensor?'},
+  {t:'Integridad de datos (principios ALCOA)',q:'¿Qué hace que un registro electrónico sea evidencia válida?'},
+  {t:'Almacenar y reenviar (store and forward)',q:'¿Cómo se monitorea sin conectividad permanente?'}],
+ vars:{A:{lvl:2,eff:8,s:[],e:['E_LOG'],ok:['S_MET','S_EMB'],why:'Pocos puntos, conectividad estable y personal cerca: sensores calibrados y un tablero con alarmas.'},
+       B:{lvl:3,eff:22,s:['S_EMB','S_MET'],e:['E_LOG'],okE:['E_LORA'],why:'120 sitios sin conectividad, registros que deben servir como evidencia auditable y calibración trazable: firmware con almacenamiento y reenvío, y validación metrológica.'}}},
+{id:'desl',res:true,t:'Alerta temprana de deslizamientos',cli:'Municipio de Villa Esperanza',city:'Antioquia',sec:'Gestión del riesgo',scene:'field',
+ brief:'Tenemos una ladera que amenaza un barrio y la vía principal. Queremos un sistema de alerta temprana que avise a la comunidad antes de un deslizamiento.',
+ hot:[{n:'Ladera',sp:'slope',A:'Se ven pluviómetros con panel solar y antena ya instalados.',B:'Grietas en la vía y árboles inclinados. Ningún instrumento instalado.'},
+  {n:'Secretario de gestión del riesgo',sp:'person',A:'"Un estudio geotécnico ya definió los umbrales de lluvia acumulada para alertar."',B:'"Nadie ha estudiado esta ladera; queremos que el sistema diga cuándo se va a caer."'},
+  {n:'Torre de comunicaciones',sp:'tower',A:'4G estable en toda la zona.',B:'Sin señal celular en la vereda.'},
+  {n:'Mapa municipal',sp:'map',tx:'Mapa de amenaza por movimientos en masa. La ladera está marcada en rojo.'}],
+ terms:[{t:'Inclinómetro y piezómetro',q:'¿Qué mide cada uno y por qué importa la presión de poros?'},
+  {t:'Umbral de lluvia acumulada',q:'¿Quién define el umbral y con qué estudio?'},
+  {t:'Sistema de alerta temprana (SAT)',q:'¿Qué componentes tiene un SAT comunitario además de los sensores?'},
+  {t:'LoRaWAN en Colombia (plan AU915-928)',q:'¿Qué alcance tiene y qué se necesita para sacar datos donde no hay señal celular?'}],
+ vars:{A:{lvl:2,eff:10,s:[],e:[],ok:['S_GEO'],why:'La instrumentación y los umbrales ya existen: el trabajo es software de integración, tablero y notificaciones.'},
+       B:{lvl:4,eff:34,s:['S_GEO','S_EMB'],e:['E_GEOI','E_LORA'],why:'Sin instrumentos, sin umbrales y sin conectividad: hay que instrumentar la ladera, definir umbrales con un geotecnista y montar comunicaciones de campo.'}}},
+{id:'mina',res:true,t:'Monitoreo de gases en mina subterránea',cli:'Carbones de la Cordillera',city:'Samacá',sec:'Minería',scene:'mine',
+ brief:'Queremos monitorear en tiempo real los gases de nuestra mina de carbón y ver todo desde la superficie y desde el celular del ingeniero de turno.',
+ hot:[{n:'Frente de trabajo',sp:'face',A:'Sensores fijos con placa "Ex ia" conectados a una central de monitoreo.',B:'Solo hay detectores portátiles que carga el supervisor.'},
+  {n:'Ingeniero de minas',sp:'person',o:{helmet:1},A:'"El sistema ya mide; necesitamos ver los datos en superficie y generar reportes."',B:'"La mina está clasificada en categoría III por grisú."'},
+  {n:'Plan de ventilación',sp:'map',tx:'Lista de puntos de medición de metano (CH₄), monóxido de carbono (CO) y oxígeno (O₂) en cada frente.'},
+  {n:'Bodega de equipos',sp:'shelf',A:'"Todo nuestro equipo de interior está certificado."',B:'"Un proveedor nos ofreció sensores WiFi muy baratos por internet."'}],
+ terms:[{t:'Grisú (metano en minas de carbón)',q:'¿Por qué es peligroso y qué es el límite inferior de explosividad (LEL)?'},
+  {t:'Decreto 1886 de 2015, artículos 46 y 47',q:'¿Qué exige para los equipos de medición y para las minas de categoría III?'},
+  {t:'Certificación Ex y seguridad intrínseca',q:'¿Qué significa "Ex ia" y por qué un sensor común no sirve bajo tierra?'},
+  {t:'Monitoreo permanente vs. detectores portátiles',q:'¿Qué diferencia operativa y normativa hay?'}],
+ vars:{A:{lvl:2,eff:10,s:[],e:[],ok:['S_EX'],why:'La medición certificada ya existe bajo tierra: XPerta solo lleva los datos a superficie, tableros y reportes.'},
+       B:{lvl:4,eff:30,s:['S_EX','S_EMB'],e:['E_EXS'],why:'Una mina de categoría III debe tener monitoreo permanente de metano y oxígeno (Decreto 1886 de 2015, art. 47) con equipos certificados Ex (art. 46): un sensor WiFi común puede ser fuente de ignición.'}}},
+{id:'cafe',res:true,t:'Riego inteligente para caficultores',cli:'Cooperativa Cafetera Montaña Alta',city:'Pitalito',sec:'Agroindustria',scene:'field',
+ brief:'Queremos usar sensores para regar solo cuando el cultivo lo necesite y ahorrar agua en los meses secos.',
+ hot:[{n:'Lote de café',sp:'drip',A:'Mangueras de goteo y una electroválvula por lote.',B:'Ladera empinada, sin riego instalado; cultivo a libre exposición.'},
+  {n:'Caficultor',sp:'person',A:'"Es mi finca: quiero que el riego se active solo cuando el suelo lo pida."',B:'"Somos 300 familias asociadas; cada finca es distinta y queremos recomendaciones para cada una."'},
+  {n:'Torre de señal',sp:'tower',A:'Buena señal WiFi desde la casa de la finca.',B:'La señal llega a la parte alta, no a los lotes.'},
+  {n:'Folleto técnico',sp:'poster',tx:'Folleto de Cenicafé sobre floración y requerimientos hídricos del café.'}],
+ terms:[{t:'Sonda capacitiva de humedad del suelo / tensiómetro',q:'¿Qué mide cada uno y cómo se calibra al tipo de suelo?'},
+  {t:'Evapotranspiración y balance hídrico',q:'¿Cómo se estima cuánta agua necesita un cultivo?'},
+  {t:'Cenicafé',q:'¿Qué información pública hay sobre requerimientos hídricos del café en Colombia?'},
+  {t:'LoRaWAN en Colombia (plan AU915-928)',q:'¿Sirve para cubrir fincas dispersas en ladera?'}],
+ vars:{A:{lvl:2,eff:8,s:[],e:['E_SOIL'],ok:['S_AGR','S_EMB'],why:'Una finca con riego instalado y conectividad: sondas, una regla de control y un tablero.'},
+       B:{lvl:3,eff:24,s:['S_AGR','S_EMB'],e:['E_SOIL','E_LORA'],why:'300 fincas distintas, sin riego ni conectividad: recomendaciones agronómicas por finca, red de campo y sensores en ladera.'}}}
+];
+
+/* Información ampliada por caso: solicitud de propuesta (RFP), preguntas para la reunión, desglose real del trabajo (w) y riesgos clave (rk) */
+const EXTRA={
+rpa:{rfp:{org:'Cooperativa de ahorro y crédito con 48.000 asociados, 22 oficinas en Boyacá y un área contable de 9 personas.',now:'La conciliación de 14 cuentas bancarias se hace en Excel: se descargan extractos, se cruzan contra el core y las partidas sin conciliar se investigan a mano. Toma cinco días hábiles al mes y retrasa el cierre.',goal:['Reducir la conciliación de 5 días a menos de 1 día.','Conciliar automáticamente al menos el 90 % de los movimientos.','Dejar trazabilidad de cada partida para la revisoría fiscal.'],scope:['Captura automática de extractos bancarios.','Cruce contra los movimientos del core.','Bandeja de excepciones para el analista.','Reportes para revisoría fiscal.'],who:'Contadora general (dueña del proceso), jefe de TI, revisor fiscal y proveedor del core.'},
+ qs:[{q:'¿Cómo se extraen hoy los movimientos del core?',A:'"Con un servicio REST que nos dejó el proveedor; tenemos la documentación."',B:'"Un analista los copia de pantallas del AS/400; no hay otra forma."'},
+  {q:'¿En qué formato llegan los extractos?',A:'"CSV estándar de los 4 bancos."',B:'"Cada uno de los 14 bancos usa su formato; dos mandan PDF escaneado."'},
+  {q:'¿Quién aprueba los cambios en el core?',A:'"Nuestro equipo de TI, con ambiente de pruebas."',B:'"Solo el proveedor externo, con seis semanas de aviso."'},
+  {q:'¿Cuántas partidas quedan hoy sin conciliar?',tx:'"Alrededor del 8 % cada mes; la mayoría son comisiones y GMF."'},
+  {q:'¿Qué espera la revisoría fiscal?',tx:'"Poder ver quién concilió cada partida y cuándo."'}],
+ A:{w:[.15,.35,.25,0,.15,.10],rk:['DAT','ADO']},B:{w:[.15,.35,.20,0,.20,.10],rk:['LEG','TAL','DAT']}},
+fact:{rfp:{org:'Distribuidora de alimentos refrigerados con 3 centros de distribución en la costa Caribe, 1.200 proveedores y 300 transportadores tercerizados.',now:'Cuatro auxiliares digitan unas 6.000 facturas al mes en el ERP y las cruzan con órdenes de compra y remisiones. Los errores generan pagos dobles y reclamos.',goal:['Eliminar la digitación manual.','Cruce automático factura–orden–remisión en el 85 % de los casos.','Pagar a proveedores en 30 días sin errores.'],scope:['Recepción automática de documentos.','Extracción de datos.','Cruce con orden de compra y remisión.','Registro en SAP Business One.'],who:'Jefe de cuentas por pagar, director financiero, coordinador de transporte y TI (2 personas).'},
+ qs:[{q:'¿Qué porcentaje de proveedores emite factura electrónica?',A:'"Casi todos; llega el XML con su PDF."',B:'"Casi todos, pero la remisión de entrega sigue en papel."'},
+  {q:'¿Qué documento firma el transportador al entregar?',A:'"Ninguno adicional; la factura basta para el cruce."',B:'"Una remisión impresa, firmada a mano y fotografiada con el celular."'},
+  {q:'¿Cuántos documentos llegan por mes?',A:'"Unas 6.000 facturas."',B:'"6.000 facturas y unas 40.000 remisiones."'},
+  {q:'¿El ERP tiene API?',tx:'"Sí, el Service Layer de SAP Business One."'},
+  {q:'¿Quién valida las diferencias de valor?',tx:'"El auxiliar de cuentas por pagar, desde una bandeja."'}],
+ A:{w:[.15,.35,.25,0,.15,.10],rk:['DAT','ADO']},B:{w:[.12,.20,.30,0,.28,.10],rk:['DAT','TAL','SCO']}},
+vib:{rfp:{org:'Planta cementera con 2 hornos, 3 molinos y 40 motores críticos de 30 a 250 kW; opera 24/7.',now:'El mantenimiento es por calendario. En 2025 hubo 6 paradas no programadas por rodamientos, cada una de 18 a 24 horas.',goal:['Anticipar fallas de motores con al menos 7 días.','Reducir 50 % las paradas no programadas.','Tablero de salud de activos para mantenimiento.'],scope:['Captura de datos de condición de los motores.','Modelos de detección de anomalías.','Alertas y tablero para mantenimiento.'],who:'Jefe de mantenimiento, gerente de planta, ingeniero de control y operadores de turno.'},
+ qs:[{q:'¿Qué variables miden hoy de cada motor?',A:'"Vibración RMS, temperatura y corriente, cada minuto."',B:'"Solo corriente y si está encendido."'},
+  {q:'¿Desde cuándo guardan esos datos?',A:'"Desde 2023, en el historiador del SCADA."',B:'"No guardamos historia."'},
+  {q:'¿Tienen registro de fallas pasadas?',A:'"Sí, órdenes de trabajo con fecha y causa."',B:'"Algunas en papel, incompletas."'},
+  {q:'¿Hay restricciones para instalar equipos?',tx:'"Polvo de cemento, vibración y temperaturas altas cerca de los hornos."'},
+  {q:'¿Quién atendería las alertas?',tx:'"El técnico de turno; necesita algo simple en el celular."'}],
+ A:{w:[.12,.20,.35,0,.20,.13],rk:['DAT','TAL']},B:{w:[.10,.15,.25,.25,.15,.10],rk:['SUP','DAT','TAL']}},
+vis:{rfp:{org:'Fabricante de envases plásticos con 4 líneas de producción y clientes del sector de bebidas.',now:'Un operario por línea revisa visualmente los envases. Los defectos que se escapan generan devoluciones y multas contractuales.',goal:['Detectar y rechazar automáticamente los envases defectuosos.','Reducir 80 % las devoluciones.','Guardar imagen de cada defecto para trazabilidad.'],scope:['Captura de imágenes en línea.','Clasificación de defectos.','Integración con el expulsor neumático.','Reportes de calidad por turno.'],who:'Jefa de calidad, jefe de producción, mantenimiento y el auditor de calidad del cliente.'},
+ qs:[{q:'¿Qué defecto les preocupa más?',A:'"Etiqueta faltante o torcida."',B:'"Microfisuras en la tapa; casi invisibles."'},
+  {q:'¿A qué velocidad corre la línea?',A:'"60 unidades por minuto."',B:'"600 unidades por minuto."'},
+  {q:'¿Tienen imágenes de defectos guardadas?',A:'"No, pero el defecto es evidente a simple vista."',B:'"No; el defecto es tan raro que apenas tenemos muestras físicas."'},
+  {q:'¿Cómo es la iluminación de la línea?',tx:'"Luz de planta, y sol directo en la tarde."'},
+  {q:'¿Existe un expulsor para sacar unidades?',tx:'"Sí, neumático, controlado por el PLC de la línea."'}],
+ A:{w:[.12,.10,.25,.25,.18,.10],rk:['SUP','ADO']},B:{w:[.10,.08,.30,.20,.24,.08],rk:['DAT','SUP','PER']}},
+plc:{rfp:{org:'Procesadora de lácteos con una planta de 3 líneas (leche, yogur, queso) y un ERP en la nube.',now:'Las órdenes de producción se imprimen y los operarios registran consumos y producción en planillas. Al final del turno un auxiliar digita todo en el ERP.',goal:['Enviar órdenes del ERP a la planta automáticamente.','Registrar consumos y producción real en tiempo real.','Eliminar planillas y digitación.'],scope:['Integración ERP ↔ PLC de las 3 líneas.','Tablero de producción por línea.','Registro de paradas y causas.'],who:'Gerente de planta, ingeniero de planta, jefe de TI y auditor de inocuidad.'},
+ qs:[{q:'¿Qué PLC tienen y de qué año?',A:'"Una sola marca, modelos de 2021 con Ethernet."',B:'"Tres marcas distintas; el más viejo es de 2004."'},
+  {q:'¿Hay documentación de la programación de los PLC?',A:'"Sí, actualizada por nuestro ingeniero."',B:'"No; quien los programó ya no trabaja aquí."'},
+  {q:'¿Pueden detener la planta para pruebas?',A:'"Sí, los domingos."',B:'"No; operamos 24/7 por la leche fresca."'},
+  {q:'¿Cómo se comunica el ERP con otros sistemas?',tx:'"Por API REST; ya lo integramos con facturación."'},
+  {q:'¿Qué exige la auditoría de inocuidad?',tx:'"Trazabilidad por lote de lo que entra y sale de cada línea."'}],
+ A:{w:[.15,.40,.20,0,.15,.10],rk:['OPE','ADO']},B:{w:[.15,.35,.15,.05,.22,.08],rk:['LEG','OPE','TAL']}},
+bot:{rfp:{org:'Aseguradora con 350.000 clientes en vida, salud y autos; call center de 60 asesores.',now:'El call center recibe 45.000 llamadas al mes y la espera supera los 12 minutos en temporada de renovaciones.',goal:['Resolver por WhatsApp el 40 % de las consultas sin asesor.','Bajar la espera a menos de 3 minutos.','Atención 24/7.'],scope:['Asistente conversacional en WhatsApp.','Base de conocimiento.','Escalamiento a asesor humano.','Tablero de métricas.'],who:'Gerente comercial, gerente de servicio, oficial de protección de datos y jurídica.'},
+ qs:[{q:'¿Qué preguntan los clientes con más frecuencia?',A:'"Horarios, requisitos, oficinas y certificados."',B:'"Coberturas, estado de reclamaciones y autorizaciones de salud."'},
+  {q:'¿El asistente debe consultar datos del cliente?',A:'"No, solo información pública."',B:'"Sí: pólizas, siniestros y autorizaciones."'},
+  {q:'¿Qué pasa si el asistente responde mal?',A:'"Molesta, pero no tiene consecuencia legal."',B:'"Si promete una cobertura que no existe, nos pueden obligar a pagarla."'},
+  {q:'¿Cuántas consultas al mes esperan?',tx:'"Unas 45.000; esperamos que la mitad migre a WhatsApp."'},
+  {q:'¿Ya tienen WhatsApp Business?',tx:'"Sí, con un proveedor autorizado."'}],
+ A:{w:[.15,.15,.35,0,.20,.15],rk:['ADO','DAT']},B:{w:[.12,.25,.25,0,.28,.10],rk:['PRI','DAT','REG']}},
+cicd:{rfp:{org:'Fintech de pagos digitales con 1,2 millones de usuarios y 35 desarrolladores.',now:'Los despliegues son manuales, de madrugada, cada dos semanas. El 20 % termina en reversión.',goal:['Desplegar al menos una vez por semana.','Bajar la tasa de fallos por cambio a menos de 10 %.','Recuperar en menos de 1 hora cuando algo falla.'],scope:['Pipelines de integración y despliegue continuo.','Pruebas automatizadas.','Ambientes de prueba reproducibles.','Tablero DORA.'],who:'CTO, líderes técnicos, oficial de cumplimiento y auditor externo.'},
+ qs:[{q:'¿Cuántos servicios despliegan?',A:'"Una aplicación principal en contenedores."',B:'"22 servicios; algunos sin pruebas."'},
+  {q:'¿Qué cobertura de pruebas tienen?',A:'"Cerca del 40 % en pruebas unitarias."',B:'"Muy desigual; varios servicios en cero."'},
+  {q:'¿Hay requisitos de auditoría sobre los cambios?',A:'"No especiales."',B:'"Sí: el auditor exige trazabilidad de cada cambio a producción."'},
+  {q:'¿Dónde corre la infraestructura?',tx:'"En la nube, con Kubernetes."'},
+  {q:'¿Quién aprueba hoy un despliegue?',tx:'"El líder técnico, por chat."'}],
+ A:{w:[.15,.25,.30,0,.20,.10],rk:['ADO','OPE']},B:{w:[.12,.25,.25,0,.28,.10],rk:['LEG','OPE','REG']}},
+amr:{rfp:{org:'Cadena de supermercados con un centro de distribución de 18.000 m² en la Sabana de Bogotá; 220 operarios por turno.',now:'Los operarios caminan hasta 14 km por turno llevando mercancía de los estantes a despacho. La rotación de personal es alta y los pedidos se atrasan en temporada.',goal:['Reducir 40 % los recorridos a pie.','Aumentar 25 % los pedidos despachados por hora.','Operar antes de la temporada alta.'],scope:['Robots móviles para transporte interno.','Integración con el WMS.','Rutas y reglas de tráfico.','Capacitación del personal.'],who:'Gerente de operaciones, jefe de seguridad y salud en el trabajo, jefe de TI y proveedor de robots (si existe).'},
+ qs:[{q:'¿Ya eligieron proveedor de robots?',A:'"Sí; instala los robots y su gestor de flota."',B:'"No; queremos que ustedes recomienden, compren e integren."'},
+  {q:'¿Los robots compartirían pasillos con personas?',A:'"No; tendrán zona exclusiva."',B:'"Sí, con montacargas y operarios."'},
+  {q:'¿Qué WMS usan?',A:'"Uno en la nube con API REST."',B:'"Uno desarrollado en casa en 2008, sin API."'},
+  {q:'¿Cómo está el piso de la bodega?',A:'"Epóxico, nivelado el año pasado."',B:'"Con grietas y desniveles en varias zonas."'},
+  {q:'¿Cuándo empieza la temporada alta?',tx:'"En noviembre."'}],
+ A:{w:[.12,.40,.20,.05,.13,.10],rk:['OPE','ADO']},B:{w:[.12,.25,.15,.20,.20,.08],rk:['SAF','SUP','LEG']}},
+mat:{rfp:{org:'Institución universitaria privada con programas presenciales y virtuales.',now:'La matrícula se hace con formularios, hojas de cálculo y pagos en banco. Cada periodo hay filas, errores de cupos y reclamos.',goal:['Matrícula 100 % en línea.','Cero errores de cupos.','Liquidación automática del valor a pagar.'],scope:['Inscripción de asignaturas y horarios.','Validación de prerrequisitos y cupos.','Liquidación y orden de pago.','Panel para registro académico.'],who:'Vicerrectoría académica, registro académico, tesorería y estudiantes.'},
+ qs:[{q:'¿Cuántos estudiantes matriculan por periodo?',A:'"Unos 3.000, en una sede."',B:'"38.000 en 5 sedes."'},
+  {q:'¿Cuántos entran al mismo tiempo cuando abre la matrícula?',A:'"Se reparte en una semana por facultades."',B:'"Más de 15.000 en la primera hora; el sistema anterior se cayó."'},
+  {q:'¿Cómo pagan los estudiantes?',A:'"En el banco, con la orden impresa."',B:'"Debe integrarse con pasarela de pagos y créditos educativos."'},
+  {q:'¿Qué sistemas académicos existen?',tx:'"Un sistema de notas con base de datos propia; sin API, pero con acceso a la base."'},
+  {q:'¿Quién define las reglas de prerrequisitos?',tx:'"Cada facultad; están en documentos de Word."'}],
+ A:{w:[.15,.10,.45,0,.15,.15],rk:['ADO','SCO']},B:{w:[.12,.20,.33,0,.25,.10],rk:['PER','PRI','OPE']}},
+card:{rfp:{org:'Clínica de alta complejidad con 180 camas y un programa de falla cardíaca con 400 pacientes activos.',now:'Las enfermeras llaman a cada paciente cada 15 días. Muchos reingresan por descompensaciones que se habrían detectado con controles de peso y presión.',goal:['Reducir 30 % los reingresos a 90 días.','Detectar descompensación temprana.','Integrar la información con la historia clínica.'],scope:['App o dispositivo para que el paciente registre datos en casa.','Tablero clínico para enfermería.','Reglas de alerta.','Integración con la historia clínica (API HL7 FHIR).'],who:'Cardióloga líder, jefe de enfermería, oficina jurídica, oficial de protección de datos y pacientes.'},
+ qs:[{q:'¿Quién decide qué hacer cuando un dato sale alterado?',A:'"La enfermera revisa y llama al paciente."',B:'"El sistema debe indicarle al paciente cómo ajustar el diurético."'},
+  {q:'¿Qué dispositivos usaría el paciente?',A:'"Su propia báscula; digita el peso en la app."',B:'"Báscula y tensiómetro Bluetooth, y un parche de ECG."'},
+  {q:'¿Ya consultaron el tema regulatorio?',A:'"No lo vemos necesario: el software no decide."',B:'"Jurídica pregunta si necesitará registro sanitario del INVIMA."'},
+  {q:'¿Cómo se integra la historia clínica?',tx:'"Expone una API HL7 FHIR; tenemos ambiente de pruebas."'},
+  {q:'¿Qué datos de los pacientes se manejarían?',tx:'"Peso, presión, síntomas y medicamentos: datos de salud."'}],
+ A:{w:[.15,.25,.30,0,.18,.12],rk:['PRI','ADO']},B:{w:[.12,.15,.20,.08,.37,.08],rk:['REG','PRI','SAF']}},
+reti:{rfp:{org:'Red pública con 1 hospital y 14 puestos de salud rurales; 9.000 pacientes diabéticos inscritos.',now:'Solo el 12 % de los diabéticos tuvo un examen de retina el último año. Hay un oftalmólogo para toda la red.',goal:['Tamizar al 60 % de los diabéticos en un año.','Priorizar la atención del oftalmólogo.','Detectar a tiempo la retinopatía que requiere tratamiento.'],scope:['Captura de fotografías de retina.','Modelo de IA para clasificar imágenes.','Flujo de remisión al especialista.','Tablero de seguimiento.'],who:'Gerente de la red, oftalmólogo, coordinadora de puestos rurales y oficina jurídica.'},
+ qs:[{q:'¿Quién entrega el resultado al paciente?',A:'"El oftalmólogo, después de revisar."',B:'"En los puestos rurales, el sistema mismo."'},
+  {q:'¿Tienen imágenes ya clasificadas por especialistas?',A:'"60.000, etiquetadas por dos oftalmólogos."',B:'"Hay imágenes, pero sin etiquetar."'},
+  {q:'¿Con qué cámaras se toman las fotos?',A:'"Un retinógrafo de mesa en el hospital."',B:'"Cámaras portátiles nuevas en cada puesto."'},
+  {q:'¿Qué conectividad hay en los puestos?',tx:'"Internet satelital lento; a veces se cae."'},
+  {q:'¿Qué pasa si el sistema se equivoca?',tx:'"Un falso negativo puede significar ceguera evitable."'}],
+ A:{w:[.10,.20,.35,0,.25,.10],rk:['DAT','REG']},B:{w:[.10,.12,.30,.05,.35,.08],rk:['REG','DAT','SAF']}},
+frio:{rfp:{org:'Empresa social del Estado que administra la vacunación de un departamento: 1 bodega central y 120 puestos de salud.',now:'La temperatura se anota a mano dos veces al día. En 2025 se perdió un lote de vacunas por una falla de nevera durante un fin de semana.',goal:['Alertar en menos de 15 minutos cuando una nevera salga de rango.','Registro continuo que sirva como evidencia en auditorías.','Cero pérdidas de vacunas por temperatura.'],scope:['Sensores de temperatura en neveras y cuartos fríos.','Plataforma de monitoreo y alertas.','Reportes para auditoría.'],who:'Químico farmacéutico, coordinador del programa de vacunación, auditores y auxiliares de los puestos.'},
+ qs:[{q:'¿Dónde están las neveras a monitorear?',A:'"En la bodega central: cuatro cuartos fríos."',B:'"En 120 puestos de salud dispersos."'},
+  {q:'¿Hay conectividad donde están las neveras?',A:'"WiFi estable en la bodega."',B:'"En varias veredas no hay señal."'},
+  {q:'¿Qué exige la auditoría sobre los registros?',A:'"Una planilla con los valores diarios."',B:'"Demostrar que el registro no fue alterado y que los sensores estaban calibrados."'},
+  {q:'¿Quién atiende una alarma?',A:'"El turno de la bodega; siempre hay alguien."',B:'"Nadie en la noche ni el fin de semana; los puestos cierran."'},
+  {q:'¿En qué rango deben estar las vacunas?',tx:'"Entre 2 y 8 °C."'}],
+ A:{w:[.12,.15,.25,.25,.13,.10],rk:['SUP','ADO']},B:{w:[.10,.12,.22,.28,.18,.10],rk:['CON','REG','SUP']}},
+desl:{rfp:{org:'Municipio de 38.000 habitantes en zona de montaña; una ladera amenaza un barrio de 300 viviendas y la vía principal.',now:'La alerta depende de que un vecino vea grietas o de avisos generales por lluvias. En 2024 un deslizamiento cerró la vía 9 días.',goal:['Avisar a la comunidad con tiempo suficiente para evacuar.','Información en tiempo real para la oficina de gestión del riesgo.','Protocolo de alertas por niveles.'],scope:['Monitoreo de la ladera.','Plataforma de umbrales y alertas.','Notificación a la comunidad (sirenas, SMS).','Tablero para gestión del riesgo.'],who:'Secretario de gestión del riesgo, alcalde, juntas de acción comunal y bomberos.'},
+ qs:[{q:'¿Hay instrumentos instalados en la ladera?',A:'"Sí, pluviómetros con panel solar y transmisión."',B:'"Ninguno."'},
+  {q:'¿Existe un estudio geotécnico de la ladera?',A:'"Sí, con umbrales de lluvia acumulada definidos."',B:'"No; nadie la ha estudiado."'},
+  {q:'¿Hay señal celular en la zona?',A:'"4G estable."',B:'"No hay señal en la vereda."'},
+  {q:'¿Cómo se avisa hoy a la comunidad?',tx:'"Por perifoneo y grupos de WhatsApp."'},
+  {q:'¿Qué pasa si hay una falsa alarma?',tx:'"La gente deja de creer en el sistema."'}],
+ A:{w:[.12,.30,.30,0,.13,.15],rk:['ADO','DAT']},B:{w:[.12,.10,.15,.38,.15,.10],rk:['SAF','CON','SUP']}},
+mina:{rfp:{org:'Mina subterránea de carbón con 3 frentes de trabajo y 140 mineros por turno.',now:'Los supervisores miden gases con detectores portátiles al inicio y durante el turno, y los anotan en libretas que se revisan en superficie al final del día.',goal:['Ver en tiempo real los gases de cada frente desde superficie.','Alarmas inmediatas al supervisor y al ingeniero de turno.','Reportes para la autoridad minera.'],scope:['Medición de CH₄, CO y O₂ en frentes y galerías.','Transmisión a superficie.','Tablero, alarmas y reportes.'],who:'Ingeniero de minas, jefe de seguridad, supervisores y autoridad minera.'},
+ qs:[{q:'¿Qué sistema de medición tienen bajo tierra?',A:'"Sensores fijos certificados conectados a una central."',B:'"Solo detectores portátiles."'},
+  {q:'¿Cómo está clasificada la mina por grisú?',A:'"Ya tenemos monitoreo permanente certificado; la autoridad minera lo revisó."',B:'"Categoría III."'},
+  {q:'¿Qué equipos eléctricos se permiten en el interior?',A:'"Solo certificados; el sistema actual ya lo es."',B:'"Nos ofrecieron sensores WiFi baratos por internet."'},
+  {q:'¿Hay comunicación de datos con el interior?',tx:'"Un cable de fibra hasta el nivel principal."'},
+  {q:'¿Quién debe recibir las alarmas?',tx:'"El supervisor del frente y el ingeniero de turno."'}],
+ A:{w:[.12,.35,.30,0,.13,.10],rk:['LEG','ADO']},B:{w:[.10,.12,.15,.35,.20,.08],rk:['SAF','REG','SUP']}},
+cafe:{rfp:{org:'Cooperativa de 300 familias caficultoras en el sur del Huila; fincas de 1 a 8 hectáreas en ladera.',now:'El riego, donde existe, se hace a ojo. En los meses secos se pierde producción y se desperdicia agua donde hay riego.',goal:['Regar solo cuando el cultivo lo necesite.','Reducir 30 % el consumo de agua donde hay riego.','Recomendaciones por finca para los asociados.'],scope:['Sensores de humedad de suelo.','Plataforma con recomendaciones.','Control de válvulas donde haya riego.','App para el caficultor.'],who:'Gerente de la cooperativa, extensionistas y caficultores.'},
+ qs:[{q:'¿Cuántas fincas participarían?',A:'"Empezamos con la finca demostrativa de la cooperativa."',B:'"Las 300 fincas asociadas."'},
+  {q:'¿Las fincas tienen riego instalado?',A:'"La finca demostrativa tiene goteo con electroválvulas."',B:'"Casi ninguna; queremos recomendaciones."'},
+  {q:'¿Hay conectividad en los lotes?',A:'"WiFi desde la casa de la finca."',B:'"La señal solo llega a la parte alta."'},
+  {q:'¿Quién usaría la información?',tx:'"El caficultor en su celular y los extensionistas."'},
+  {q:'¿Tienen datos de clima?',tx:'"Una estación meteorológica en la sede de la cooperativa."'}],
+ A:{w:[.12,.15,.30,.25,.08,.10],rk:['ADO','SUP']},B:{w:[.15,.10,.25,.30,.10,.10],rk:['CON','ADO','SUP']}}
+};
+
+CASES.forEach(c=>{const x=EXTRA[c.id];c.rfp=x.rfp;c.qs=x.qs;['A','B'].forEach(k=>Object.assign(c.vars[k],x[k]));});
+const BY={};CASES.forEach(c=>BY[c.id]=c);
+const EVENTS=[
+ {t:'Un desarrollador clave renunció a mitad del proyecto.',ef:1.07,d:0},
+ {t:'El proveedor retrasó la importación de equipos tres semanas.',ef:1,d:3,eq:true},
+ {t:'El cliente entregó datos y accesos antes de lo previsto.',ef:0.95,d:0},
+ {t:'Cambió el interlocutor del cliente y hubo que revalidar requisitos.',ef:1.05,d:1},
+ {t:'Una incapacidad médica dejó al equipo con una persona menos dos semanas.',ef:1.03,d:0}];
+
+/* ---------- utilidades ---------- */
+function rng(seed){let a=seed>>>0;return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+const comm=n=>Math.max(0.55,1-0.03*(n-1));                 // cada persona extra agrega comunicación
+const thrTeam=(s,j)=>{const n=s+j;if(!n)return 0.01;let f=(PS*s+PJ*j)*comm(n);if(s===0)f*=0.75;else if(j>2*s)f*=0.9;return f;};
+const tnom=E=>3*Math.cbrt(E);                               // meses: regla empírica 3·E^(1/3)
+const tmin=E=>0.75*tnom(E);                                 // compresión máxima ≈25 %
+const median=a=>{if(!a.length)return 0;const s=[...a].sort((x,y)=>x-y),m=s.length>>1;return s.length%2?s[m]:(s[m-1]+s[m])/2;};
+const ncdf=z=>{const t=1/(1+0.2316419*Math.abs(z)),d=0.3989423*Math.exp(-z*z/2);let p=d*t*(0.3193815+t*(-0.3565638+t*(1.781478+t*(-1.821256+t*1.330274))));return z>0?1-p:p;};
+const est=d=>{const M=d.c.reduce((a,b)=>a+b,0)*(1+MGMT),O=M*(1-d.a/100),P=M*(1+d.b/100);return {O,M,P,pert:(O+4*M+P)/6,sd:Math.max(0.05,(P-O)/6)};};
+
+/* ---------- sorteo ---------- */
+function buildRun(seed){
+ const r=rng(seed),sh=a=>{a=[...a];for(let i=a.length-1;i>0;i--){const j=Math.floor(r()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;};
+ const res=sh(CASES.filter(c=>c.res)).slice(0,N_RES),nor=sh(CASES.filter(c=>!c.res)).slice(0,N_CASES-N_RES);
+ const slots=sh([...Array(N_CASES-1).keys()].map(k=>k+1)).slice(0,N_RES);
+ const order=[];let ri=0,ni=0;for(let i=0;i<N_CASES;i++)order.push(slots.includes(i)?res[ri++]:nor[ni++]);
+ const mentors=sh(['boehm','mcconnell','cohn','pressman','sommerville']);
+ return {seed,cases:order.map((c,i)=>({id:c.id,v:r()<0.5?'A':'B',noise:0.9+0.2*r(),cf:1.35+0.3*r(),df:1.2+0.35*r(),tp:0.95+0.2*r(),tw:1.0+0.25*r(),tac:r()<0.3,
+  ev:r()<0.4?Math.floor(r()*EVENTS.length):-1,pal:Array.from({length:4},()=>Math.floor(r()*1000)),mentor:mentors[i%5]}))};
+}
+/* ---------- plan de referencia (estimador calibrado) ---------- */
+function fairPlan(E,V){
+ const Tn=tnom(E),Tm=tmin(E),sp=0.5*V.s.length;let n,s,j,T;
+ for(n=2;n<=14;n++){s=Math.ceil(n/2);j=n-s;T=Math.max(Tm,E/(thrTeam(s,j)+sp));if(T<=Tn)break;}
+ n=Math.min(n,14);s=Math.ceil(n/2);j=n-s;T=Math.max(Tm,E/(thrTeam(s,j)+sp));
+ const lead=Math.max(0,...V.s.map(x=>SPEC[x].l),...V.e.map(x=>EQ[x].l));
+ const cost=(RS*s+RJ*j)*T+V.s.reduce((a,x)=>a+0.5*T*SPEC[x].c+SPEC[x].f,0)+V.e.reduce((a,x)=>a+EQ[x].c,0);
+ return {n,s,j,T:T+0.5*lead/WK,cost,price:cost*1.1*1.2};
+}
+/* ---------- vista previa del estudiante (solo sus números) ---------- */
+function preview(d,pay,inv){
+ const e=est(d),Tp=d.W/WK;
+ let fees=0,eqc=0;d.specs.forEach(s=>{if(!pay.has(s))fees+=SPEC[s].f;});d.eqs.forEach(x=>{if(!inv.has(x))eqc+=EQ[x].c;});
+ const lab=(RS*d.s+RJ*d.j)*Tp,spc=d.specs.reduce((a,s)=>a+0.5*Tp*SPEC[s].c,0);
+ const cost=lab+spc+fees+eqc,reserve=cost*d.r/100,price=(cost+reserve)*(1+d.m/100);
+ const lead=Math.max(0,...d.specs.filter(s=>!pay.has(s)).map(s=>SPEC[s].l),...d.eqs.filter(x=>!inv.has(x)).map(x=>EQ[x].l));
+ const cap=(thrTeam(d.s,d.j)+0.5*d.specs.length)*Math.max(0,Tp-0.5*lead/WK);
+ return {...e,lab,spc,fees,eqc,cost,reserve,price,cap,prob:ncdf((cap-e.pert)/e.sd),tn:tnom(e.pert)*WK,tm:tmin(e.pert)*WK,lead};
+}
+/* ---------- negociación con el cliente ---------- */
+function limits(rc){
+ const C=BY[rc.id],VA=C.vars.A,V=C.vars[rc.v];
+ const fa=fairPlan(VA.eff*rc.noise*(1+MGMT),VA),f=fairPlan(V.eff*rc.noise*(1+MGMT),V);
+ const tp=fa.price*rc.tp,tw=Math.round(fa.T*WK*rc.tw);
+ return {tp,tw,ceil:Math.max(tp*1.1,f.price*rc.cf),dead:Math.max(tw*1.15,f.T*WK*rc.df),fair:f};
+}
+const credible=tl=>((tl.bit||'').trim().length>=80)+((tl.risks||0)>=2)+(((tl.hot||0)+(tl.qn||0))>=5)>=2;
+function clientOpen(rc,d,pv){const L=limits(rc),oP=pv.price>L.tp*1.05,oW=d.W>L.tw;if(!oP&&!oW)return{kind:rc.tac?'tactic':'accept',L};return{kind:'push',oP,oW,L};}
+function clientResolve(rc,d,pv,open,opt,cred){
+ const L=open.L;let price=pv.price,W=d.W,scope=1,ceded=false;
+ if(open.kind==='accept')return{won:true,price,W,scope,ceded,opt:'—'};
+ if(opt==='retirar')return{won:false,declined:true,price,W,scope,ceded,opt};
+ if(opt==='margen')price=pv.price/(1+d.m/100)*(1+Math.max(5,d.m-10)/100);
+ if(opt==='fase1'){scope=0.7;price*=0.7;W=Math.round(W*0.8);}
+ if(opt==='recortar'){price=Math.min(price,L.tp);W=Math.min(W,L.tw);ceded=true;}
+ const limP=open.kind==='tactic'?(cred?L.ceil:L.tp*1.05):(cred?L.ceil:L.tp*1.1),limW=cred?L.dead:L.tw*1.1;
+ const okP=ceded||price<=limP,okW=ceded||W<=limW;
+ return{won:okP&&okW,price,W,scope,ceded,opt,why:!okP?'precio':(!okW?'plazo':null)};
+}
+
+/* ---------- evaluación completa ---------- */
+function evaluate(run,D,TL){
+ let cash=START_CASH,rep=START_REP,fat=0;const pay=new Set(),inv=new Set(),rows=[];
+ run.cases.forEach((rc,i)=>{
+  const C=BY[rc.id],V=C.vars[rc.v],d=D[i],tl=TL[i]||{},ng=d.neg||{won:true,price:0,W:d.W,scope:1};
+  const ok=V.ok||[],okE=V.okE||[];
+  const missS=V.s.filter(s=>!d.specs.includes(s)),wasteS=d.specs.filter(s=>!V.s.includes(s)&&!ok.includes(s));
+  const missE=V.e.filter(x=>!d.eqs.includes(x)),wasteE=d.eqs.filter(x=>!V.e.includes(x)&&!okE.includes(x));
+  const base=V.eff*rc.noise,truth=base*(1+MGMT),truthC=V.w.map(w=>w*base);
+  let gap=1;missS.forEach(s=>gap*=1+SPEC[s].g);missE.forEach(x=>gap*=1+EQ[x].g);gap=Math.min(gap,1.8);
+  const Eref=truth*gap*(1+0.02*wasteS.length);
+  const pv=preview(d,pay,inv),e=est(d);
+  const useful=d.specs.filter(s=>V.s.includes(s)||ok.includes(s)).length;
+  /* ---- puntaje de la decisión (sin suerte) ---- */
+  const dl=Math.abs(d.lvl-V.lvl),sCx=dl===0?12:dl===1?6:0;
+  const sc=(need,ch,okk)=>{const N=need.length,TP=ch.filter(x=>need.includes(x)).length,FP=ch.filter(x=>!need.includes(x)&&!okk.includes(x)).length;return clamp((N?TP/N:1)-0.25*FP,0,1);};
+  const capS=sc(V.s,d.specs,ok),capE=sc(V.e,d.eqs,okE),cap=0.6*capS+0.4*capE,sCap=22*cap;
+  const e1=Math.abs(e.pert-Eref)/Eref,e2=Math.abs(e.pert-truth)/truth,ref=e1<=e2?Eref:truth,mre=Math.min(e1,e2),signed=(e.pert-ref)/ref;
+  const hit=(e.O<=Eref&&Eref<=e.P)||(e.O<=truth&&truth<=e.P),width=e.P/Math.max(0.5,e.O);
+  const sEst=22*Math.max(0,1-mre/0.5)+(hit?(width<=4?8:4):0);
+  const sumC=d.c.reduce((a,b)=>a+b,0)||1,shape=1-d.c.reduce((a,v,k)=>a+Math.abs(v/sumC-V.w[k]),0)/2,sShape=6*clamp((shape-0.5)/0.4,0,1);
+  const sc1=ng.scope||1,Es=Eref*sc1,thrU=thrTeam(d.s,d.j)+0.5*useful,Tw=Es/thrU,Texp=Math.max(tmin(Es),Tw)+0.5*pv.lead/WK,ratio=((ng.W||d.W)/WK)/Texp;
+  const sW=(ratio>=0.95&&ratio<=1.35)?7:((ratio>=0.8&&ratio<=1.7)?3.5:0);
+  const sN=(Tw<=1.6*tnom(Es)&&Tw>=0.6*tmin(Es))?3:0;
+  const fieldHW=V.e.length>0, apFit=V.lvl<=2?(d.ap==='pil'&&!fieldHW?0.6:1):({pred:0.3,inc:0.8,agil:fieldHW?0.8:1,pil:fieldHW?1:0.6})[d.ap];
+  const sAp=5*apFit;
+  const rTP=d.risks.filter(x=>V.rk.includes(x)).length,rFP=d.risks.filter(x=>!V.rk.includes(x)&&x!=='SCO').length;
+  const sRisk=8*clamp(rTP/V.rk.length-0.15*rFP,0,1),sR=(d.r>=(V.lvl>=3?10:5)&&d.r<=35)?2:0;
+  const sNeg=ng.ceded?-10:(ng.opt==="retirar"?3:5);
+  const dec=sCx+sCap+sEst+sShape+sW+sN+sAp+sRisk+sR+sNeg;
+  /* ---- diligencia ---- */
+  const dil=clamp(25*(tl.hot||0)/(tl.hotN||4)+15*Math.min(tl.qn||0,3)/3+(C.res?15*Math.min(tl.lib||0,3)/3:(tl.hist?15:0))
+   +10*Math.min(tl.wi||0,8)/8+20*Math.min((tl.bit||'').trim().length,150)/150+15*clamp(((tl.t||0)-60)/240,0,1),0,100);
+  /* ---- ejecución ---- */
+  let ex=null;const ev=rc.ev>=0?EVENTS[rc.ev]:null;
+  if(ng.won){
+   cash-=pv.fees+pv.eqc;pay.forEach(s=>{if(!d.specs.includes(s))cash-=BENCH;});d.specs.forEach(s=>pay.add(s));d.eqs.forEach(x=>inv.add(x));
+   const A=APPR[d.ap],mitR=1-0.05*rTP;
+   const gapX=1+(gap-1)*A.mit*mitR;
+   let E=truth*gapX*(1+0.02*wasteS.length)*A.ov*ng.scope*(ev?ev.ef:1);
+   const notes=[];
+   if(V.lvl>=3&&d.ap==='pred'){E*=1.12;notes.push('Descubrimientos tardíos: en un enfoque predictivo, los hallazgos de un dominio incierto salieron caros (+12 % de esfuerzo).');}
+   else if(V.lvl>=3)E*=1.04;
+   if(gap>1&&A.mit<1)notes.push(`El enfoque ${A.n.toLowerCase()} permitió detectar antes la capacidad faltante y amortiguó su impacto.`);
+   const ff=1-0.3*fat,thrE=thrU*ff;let Tact=Math.max(E/thrE,tmin(E))+0.5*pv.lead/WK;
+   const missLead=Math.max(0,...missE.map(x=>EQ[x].l));Tact+=missLead/WK*(A.mit<1?0.6:1);
+   if(ev&&ev.d&&(!ev.eq||V.e.length||d.eqs.length))Tact+=ev.d/WK;
+   const Tp=ng.W/WK;let extra=0,brooks=false,repD=0;const late=Tact>Tp*1.1;
+   if(late){
+    if(d.pol==='ampliar'){const k=Math.ceil((d.s+d.j)*0.5),half=Tact/2,remE=(E/2)*1.1,out1=thrE*0.7*1.5,thrN=(thrTeam(d.s,d.j+k)+0.5*useful)*ff;
+     const T2=1.5+Math.max(0,remE-out1)/thrN,nT=half+T2;extra=k*T2*RJ;brooks=true;notes.push(`Sumaste ${k} personas a mitad del proyecto: el plazo pasó de ${(Tact*WK).toFixed(0)} a ${(nT*WK).toFixed(0)} semanas y costó ${extra.toFixed(0)} M más.`);Tact=nT;}
+    else if(d.pol==='extra'){const nT=Tact/2+(Tact/2)/1.15;notes.push(`Horas extra en la segunda mitad: ganaste ${((Tact-nT)*WK).toFixed(0)} semanas, pero el equipo llegó agotado al siguiente proyecto.`);Tact=nT;fat=clamp(fat+0.3,0,0.9);repD-=2;}
+    else if(d.pol==='alcance'){const nT=Tact/2+(Tact/2)*0.85;notes.push('Negociaste recortar alcance durante la ejecución: el cliente recibió menos de lo acordado.');Tact=nT;repD-=3;}
+    else notes.push('Re-planificaste con el cliente y moviste la línea base.');
+   } else fat=Math.max(0,fat-0.15);
+   const over=Tact/Tp-1;if(late&&d.pol==='replan')repD-=over>0.25?6:3;
+   let cost=(RS*d.s+RJ*d.j)*Tact+extra+d.specs.reduce((a,s)=>a+0.5*Tact*SPEC[s].c,0)+pv.fees+pv.eqc;
+   missE.forEach(x=>{cost+=1.3*EQ[x].c;notes.push(`Compra de urgencia: ${EQ[x].n} (+30 %).`);});
+   missS.forEach(s=>{cost+=1.5*SPEC[s].f+0.5*(Tact/2)*SPEC[s].c;notes.push(`Contratación tardía: ${SPEC[s].n}.`);});
+   const crit=[...missS.filter(s=>SPEC[s].crit).map(s=>SPEC[s].crit),...missE.filter(x=>EQ[x].crit).map(x=>EQ[x].crit)];
+   if(crit.length){repD-=10;notes.push('Incidente: '+crit[0]+'.');}
+   if(ng.scope<1)repD-=1;
+   if(over>0.2)repD-=6;else if(over<=0.05)repD+=3;
+   const budget=ng.price/(1+d.m/100);if(cost>budget)repD-=4;else repD+=2;
+   const profit=ng.price-cost;rep=clamp(rep+repD,0,100);cash+=ng.price-(cost-pv.fees-pv.eqc);
+   ex={Tact,Tp,over,cost,budget,profit,price:ng.price,notes,brooks,crit:crit.length>0,late,fatAfter:fat,ev:ev&&ev.t,spi:Tp/Tact,cpi:budget/cost};
+  } else rep=clamp(rep-(ng.declined?0:1),0,100);
+  const doms={alc:(sCx/12)*0.6+(sShape/6)*0.4,rec:cap,fin:sEst/30,cro:(sW+sN)/10,rie:(sRisk+sR+sAp)/15,int:(Math.max(0,sNeg)/5)*0.6+Math.min(tl.qn||0,3)/3*0.4,gob:dil/100};
+  rows.push({i,C,V,rc,d,tl,ng,pv,e,truth,truthC,Eref,ref,mre,signed,hit,width,shape,missS,wasteS,missE,wasteE,capS,capE,cap,rTP,rFP,
+   dl,sCx,sCap,sEst,sShape,sW,sN,sAp,sRisk,sR,sNeg,apFit,dec,dil,Texp,Tw,ratio,ex,doms,cash,rep});
+ });
+ const N=rows.length,avg=f=>rows.reduce((a,r)=>a+f(r),0)/N;
+ const decision=avg(r=>r.dec),dilig=avg(r=>r.dil);
+ const won=rows.filter(r=>r.ex),totP=won.reduce((a,r)=>a+r.ex.price,0),totPr=won.reduce((a,r)=>a+r.ex.profit,0),margin=totP?totPr/totP:0;
+ const biz=won.length?clamp(50+150*margin+0.8*(rep-START_REP),0,100):clamp(15+0.8*(rep-START_REP),0,100);
+ const score=0.7*decision+0.15*dilig+0.15*biz;
+ const bias=median(rows.map(r=>r.signed)),mmre=avg(r=>r.mre),pred25=rows.filter(r=>r.mre<=0.25).length/N;
+ const capAcc=avg(r=>r.cap),hitRate=rows.filter(r=>r.hit).length/N,cxAcc=rows.filter(r=>r.dl===0).length/N;
+ const under=rows.filter(r=>r.V.lvl>=3&&(r.d.lvl<r.V.lvl||r.missS.length)).length;
+ const waste=rows.reduce((a,r)=>a+r.wasteS.length+r.wasteE.length,0);
+ const brooksN=rows.filter(r=>r.ex&&r.ex.brooks).length,lostN=rows.filter(r=>!r.ng.won&&!r.ng.declined).length,ceded=rows.filter(r=>r.ng.ceded).length;
+ const DG=dilig/100,mS=avg(r=>r.signed),sdS=Math.sqrt(avg(r=>(r.signed-mS)**2));
+ const doms={};['alc','cro','fin','int','rec','rie','gob'].forEach(k=>doms[k]=avg(r=>r.doms[k])*100);
+ let arch;
+ if(score>=75&&DG>=0.45&&Math.abs(bias)<=0.15&&capAcc>=0.7&&!ceded&&!brooksN&&biz>=40)arch='socio';
+ else if(DG<0.3)arch='veloz';
+ else if(DG>=0.65&&decision<55&&sdS>=0.45)arch='explorador';
+ else if(under>=2&&under>=Math.ceil(rows.filter(r=>r.V.lvl>=3).length*0.6))arch='ciego';
+ else if(ceded>=2)arch='presion';
+ else if(bias<=-0.18)arch='optimista';
+ else if(bias>=0.22||waste>=4||lostN>=2)arch='sobre';
+ else if(brooksN>=2)arch='brooks';
+ else if(score>=62)arch='gestor';
+ else arch='rescate';
+ const traits=[];
+ if(bias<=-0.12)traits.push('Tiendes a subestimar');if(bias>=0.15)traits.push('Tiendes a sobreestimar');
+ if(under>=1)traits.push('Subestimas la complejidad técnica');if(waste>=3)traits.push('Inviertes en capacidad que no se necesita');
+ if(hitRate<0.4)traits.push('Tus rangos no contienen la realidad');if(avg(r=>r.width)>4)traits.push('Rangos demasiado amplios');
+ if(ceded)traits.push('Cediste a la presión del cliente');if(brooksN)traits.push('Sumaste gente tarde');
+ if(avg(r=>r.rTP/r.V.rk.length)>=0.6)traits.push('Identificas bien los riesgos');if(avg(r=>r.shape)<0.65)traits.push('Tu desglose no refleja dónde está el trabajo');
+ if(DG>=0.65)traits.push('Exploras e investigas a fondo');if(DG<0.35)traits.push('Decides sin explorar');
+ if(pred25>=0.6)traits.push('Estimaciones calibradas (PRED(25) ≥ 60 %)');
+ return {rows,decision,dilig,biz,score,bias,mmre,pred25,capAcc,hitRate,cxAcc,under,waste,brooksN,lostN,ceded,arch,traits,cash,rep,fat,margin,won:won.length,totPr,doms,sdS};
+}
+const API={N_CASES,N_RES,RS,RJ,PS,PJ,MGMT,START_CASH,START_REP,BENCH,WK,LV,SPEC,EQ,COMP,APPR,RISK,POLS,CASES,BY,EVENTS,rng,clamp,thrTeam,tnom,tmin,ncdf,est,buildRun,fairPlan,preview,limits,credible,clientOpen,clientResolve,evaluate};
+if(typeof module!=='undefined'&&module.exports)module.exports=API;else root.XP=API;
+})(typeof window!=='undefined'?window:globalThis);
+</script>
+<script>/* ===== XPerta v2 · pixel art con contorno (estilo de la plantilla) ===== */
+(function(){
+'use strict';
+const W=320,H=180;
+const P={k:'#141414',g1:'#34343a',g2:'#4f4f57',g3:'#7c7c86',g4:'#b4b4bc',g5:'#dedee3',w:'#ffffff',r:'#E50914',r2:'#B20710',r4:'#5c070c',
+ am:'#F5A524',am2:'#c27c0e',gr:'#2E9E5B',gr2:'#1d6b3c',gr3:'#7fd19c',bl:'#2B6CB0',bl2:'#1b4777',bl3:'#8fbbe8',wd:'#8a5a34',wd2:'#5e3b20',wd3:'#b07a4a',sky:'#9fd0f0',sky2:'#cfe8f7',lcd:'#0f2a1a'};
+const SKIN=['#F6D3B3','#F0C29A','#D9A378','#B97A50','#8A5534'],HAIR=['#141414','#3B2A1E','#6B3F1F','#B5884B','#D8D0C4','#8A2D2D'];
+const JACK={rojo:'#E50914',negro:'#2b2b2b',azul:'#2B6CB0',verde:'#2E9E5B'};
+function shade(hex,f){const n=parseInt(hex.slice(1),16);let r=n>>16,g=n>>8&255,b=n&255;const m=v=>Math.max(0,Math.min(255,Math.round(f<0?v*(1+f):v+(255-v)*f)));return'#'+((1<<24)+(m(r)<<16)+(m(g)<<8)+m(b)).toString(16).slice(1);}
+let X=null;
+function R(x,y,w,h,c){X.fillStyle=c;X.fillRect(Math.round(x),Math.round(y),Math.round(w),Math.round(h));}
+function D(x,y,w,h,c1,c2){X.fillStyle=c1;X.fillRect(x,y,w,h);X.fillStyle=c2;for(let j=0;j<h;j++)for(let i=(j&1);i<w;i+=2)X.fillRect(x+i,y+j,1,1);}
+/* ---- fuente pixel (3 o 4 de ancho × 5) ---- */
+const F={A:'010101111101101',B:'110101110101110',C:'011100100100011',D:'110101101101110',E:'111100110100111',F:'111100110100100',G:'011100101101011',H:'101101111101101',I:'111010010010111',J:'001001001101010',K:'101101110101101',L:'100100100100111',M:'10011111111110011001',N:'10011101101110011001',O:'010101101101010',P:'110101110100100',Q:'010101101110011',R:'110101110101101',S:'011100010001110',T:'111010010010010',U:'101101101101111',V:'101101101101010',W:'10011001111111111001',X:'101101010101101',Y:'101101010010010',Z:'111001010100111',
+ 0:'111101101101111',1:'010110010010111',2:'110001010100111',3:'110001010001110',4:'101101111001001',5:'111100110001110',6:'011100111101111',7:'111001010010010',8:'111101111101111',9:'111101111001110','.':'000000000000010',',':'000000000010100','-':'000000111000000',':':'000010000010000','/':'001001010100100','%':'101001010100101','°':'010101010000000','!':'010010010000010','?':'110001010000010','+':'000010111010000',' ':'000000000000000','·':'000000010000000','<':'001010100010001','>':'100010001010100'};
+const norm=s=>s.normalize('NFD').replace(/[̀-ͯ]/g,'').toUpperCase();
+function T(s,x,y,c,sc){sc=sc||1;X.fillStyle=c;let cx=x;for(const ch of norm(s)){const g=F[ch]||F[' '],w=g.length/5;for(let i=0;i<g.length;i++)if(g[i]==='1')X.fillRect(cx+(i%w)*sc,y+((i/w)|0)*sc,sc,sc);cx+=(w+1)*sc;}return cx-x;}
+function TW(s,sc){sc=sc||1;let w=0;for(const ch of norm(s))w+=((F[ch]||F[' ']).length/5+1)*sc;return w-sc;}
+function plate(x,y,txt,bg,fg){const w=TW(txt)+6;R(x,y,w,9,P.k);R(x+1,y+1,w-2,7,bg);T(txt,x+3,y+2,fg);return w;}
+
+/* ---- constructor de sprites en rejilla + contorno (como la plantilla) ---- */
+function grid(w,h){const G=Array.from({length:h},()=>Array(w).fill(null));const g={G,w,h,
+ p(x,y,c){x=Math.round(x);y=Math.round(y);if(x>=0&&x<w&&y>=0&&y<h)G[y][x]=c;},
+ r(x,y,ww,hh,c){for(let j=0;j<hh;j++)for(let i=0;i<ww;i++)g.p(x+i,y+j,c);},
+ t(s,x,y,c){let cx=x;for(const ch of norm(s)){const q=F[ch]||F[' '],qw=q.length/5;for(let i=0;i<q.length;i++)if(q[i]==='1')g.p(cx+(i%qw),y+((i/qw)|0),c);cx+=qw+1;}}};return g;}
+function outlined(G,col){const h=G.length,w=G[0].length,O=Array.from({length:h+2},()=>Array(w+2).fill(null));
+ for(let y=0;y<h;y++)for(let x=0;x<w;x++)O[y+1][x+1]=G[y][x];const Rr=O.map(r=>r.slice());
+ for(let y=0;y<h+2;y++)for(let x=0;x<w+2;x++){if(O[y][x])continue;if([[1,0],[-1,0],[0,1],[0,-1]].some(([dx,dy])=>O[y+dy]&&O[y+dy][x+dx]))Rr[y][x]=col||P.k;}return Rr;}
+function toCanvas(G,s){s=s||1;const c=document.createElement('canvas');c.width=G[0].length*s;c.height=G.length*s;const x=c.getContext('2d');for(let y=0;y<G.length;y++)for(let i=0;i<G[y].length;i++){const v=G[y][i];if(v){x.fillStyle=v;x.fillRect(i*s,y*s,s,s);}}return c;}
+const CACHE={};
+function sprite(name,o){const k=name+JSON.stringify(o||{});if(CACHE[k])return CACHE[k];const d=DEF[name];const g=grid(d.w,d.h);d.f(g,o||{});return CACHE[k]=toCanvas(outlined(g.G));}
+
+/* ======================= PERSONAJES (16×32) ======================= */
+function bodyGrid(g,o){
+ const sk=o.skin||SKIN[1],skd=shade(sk,-.18),hr=o.hair||HAIR[0],hrd=shade(hr,-.25),hrl=shade(hr,.25);
+ const jk=o.coat?'#f4f6f8':(o.jacket||P.r),jkd=o.coat?'#cfd5dc':shade(jk,-.28),sh=o.shirt||'#ffffff';
+ const fem=o.g==='f',u=o.breath?1:0;
+ // piernas y zapatos
+ const bottom=o.bottom||(fem?'falda':'pantalon'),pn=o.pants||'#26324a',pnd=shade(pn,-.3);
+ if(bottom==='falda'){g.r(4,22,8,4,pn);g.r(3,25,10,1,pn);g.r(4,25,8,1,pnd);g.r(5,26,2,4,skd);g.r(9,26,2,4,skd);}
+ else{g.r(4,22,4,8,pn);g.r(8,22,4,8,pn);g.r(7,23,1,7,pnd);g.r(8,23,1,7,pnd);}
+ g.r(4,30,4,2,P.k);g.r(8,30,4,2,P.k);g.p(3,31,P.k);g.p(12,31,P.k);
+ const Y=y=>y+u;
+ // torso
+ if(o.coat){g.r(3,Y(13),10,13,jk);g.r(3,Y(13),1,13,jkd);g.r(12,Y(13),1,13,jkd);g.r(7,Y(13),2,6,o.jacket||P.bl);g.p(5,Y(17),P.bl);g.p(5,Y(18),P.bl3);}
+ else{g.r(3,Y(13),10,9,jk);g.r(3,Y(13),1,9,jkd);g.r(12,Y(13),1,9,jkd);g.r(3,Y(21),10,1,jkd);
+  g.r(7,Y(13),2,4,sh);g.p(6,Y(13),sh);g.p(9,Y(13),sh);
+  if(o.tie){g.r(7,Y(14),2,4,o.tie);}if(o.bow){g.p(6,Y(13),o.bow);g.p(9,Y(13),o.bow);g.r(7,Y(13),2,1,shade(o.bow,-.25));}
+  g.p(6,Y(17),jkd);g.p(9,Y(17),jkd);}
+ if(o.badge){g.r(4,Y(15),2,2,o.coat?P.r:'#ffffff');g.p(4,Y(15),P.r);}
+ // brazos y manos
+ const ar=o.coat?jk:jk;g.r(2,Y(13),1,8,ar);g.r(13,Y(13),1,8,ar);g.p(2,Y(21),sk);g.p(13,Y(21),sk);
+ // cuello y cabeza
+ g.r(7,Y(12),2,1,skd);
+ if(fem&&(o.hs==='largo'||o.hs==='rizado')){g.r(3,Y(3),1,o.hs==='rizado'?10:12,hr);g.r(12,Y(3),1,o.hs==='rizado'?10:12,hr);g.r(2,Y(5),1,o.hs==='rizado'?8:9,hrd);g.r(13,Y(5),1,o.hs==='rizado'?8:9,hrd);}
+ g.r(4,Y(3),8,9,sk);g.p(3,Y(7),sk);g.p(12,Y(7),sk);g.r(5,Y(11),6,1,skd);g.r(11,Y(4),1,7,shade(sk,-.07));
+ // cara
+ if(o.blink){g.p(6,Y(7),skd);g.p(9,Y(7),skd);}else{g.p(6,Y(7),P.k);g.p(9,Y(7),P.k);g.p(6,Y(6),hrd);g.p(9,Y(6),hrd);}
+ g.p(8,Y(8),skd);g.r(7,Y(10),2,1,fem?'#c0505a':shade(sk,-.35));if(fem){g.p(5,Y(9),'#f2a3a3');g.p(10,Y(9),'#f2a3a3');}
+ // cabello
+ const hs=o.hs||'corto';
+ if(hs==='calvo'){g.r(3,Y(5),1,3,hr);g.r(12,Y(5),1,3,hr);g.p(4,Y(5),hr);g.p(11,Y(5),hr);g.p(6,Y(3),shade(sk,.2));}
+ else if(hs==='rapado'){g.r(4,Y(2),8,2,hrd);g.p(3,Y(4),hrd);g.p(12,Y(4),hrd);}
+ else if(hs==='rizado'){for(let i=2;i<14;i+=2){g.r(i,Y(1),2,2,hr);g.p(i,Y(1),hrl);}g.r(3,Y(3),10,1,hr);g.p(4,Y(4),hr);g.p(11,Y(4),hr);g.r(3,Y(3),1,2,hr);g.r(12,Y(3),1,2,hr);}
+ else{g.r(4,Y(1),8,3,hr);g.r(5,Y(1),5,1,hrl);g.r(3,Y(2),1,4,hr);g.r(12,Y(2),1,4,hr);
+  if(hs==='lateral'){g.r(4,Y(4),4,1,hr);g.p(11,Y(4),hr);}
+  else if(hs==='corto'){g.p(4,Y(4),hr);g.p(11,Y(4),hr);g.r(5,Y(4),2,1,hr);}
+  else if(hs==='cola'){g.r(4,Y(4),3,1,hr);g.r(12,Y(4),2,2,hr);g.r(13,Y(6),2,6,hr);g.r(14,Y(7),1,4,hrd);g.p(12,Y(4),o.ribbon||P.r);}
+  else if(hs==='melena'){g.r(4,Y(4),8,1,hr);g.r(3,Y(6),1,5,hr);g.r(12,Y(6),1,5,hr);g.r(2,Y(5),1,5,hrd);g.r(13,Y(5),1,5,hrd);}
+  else if(hs==='largo'){g.r(4,Y(4),3,1,hr);g.r(9,Y(4),3,1,hr);}}
+ if(o.glasses){const f='#3d4a5c';g.p(5,Y(7),f);g.p(7,Y(7),f);g.p(8,Y(7),f);g.p(10,Y(7),f);g.p(6,Y(6),f);g.p(9,Y(6),f);g.p(6,Y(8),f);g.p(9,Y(8),f);}
+ if(o.beard){g.r(4,Y(9),8,2,hr);g.r(5,Y(11),6,1,hr);g.r(7,Y(10),2,1,shade(sk,-.35));}
+ if(o.mustache)g.r(6,Y(9),4,1,hr);
+ if(o.goatee){g.r(6,Y(9),4,1,hr);g.r(7,Y(10),2,2,hr);}
+ if(o.helmet){g.r(3,Y(0),10,3,P.am);g.r(2,Y(2),12,1,P.am2);g.r(7,Y(0),2,1,'#fff3c4');}
+}
+const DEF={};
+DEF.person={w:16,h:32,f:bodyGrid};
+/* autores (mismos rasgos que la plantilla de perfiles) */
+const LOOK={
+ pressman:{skin:'#EDB98A',hair:'#B9BEC4',hs:'corto',glasses:1,beard:1,jacket:'#2B4C7E',tie:'#E50914',pants:'#2b2b2b'},
+ sommerville:{skin:'#F6D3B3',hair:'#DADADA',hs:'lateral',jacket:'#8A2D4A',pants:'#3a3a3a'},
+ boehm:{skin:'#E9B48F',hair:'#EEEEEE',hs:'calvo',glasses:1,mustache:1,jacket:'#2E5E4E',bow:'#F5A524',pants:'#3a3a3a'},
+ mcconnell:{skin:'#F1C6A0',hair:'#5A3A22',hs:'corto',jacket:'#D97706',pants:'#26324a'},
+ cohn:{skin:'#E3A97F',hair:'#3B2A1E',hs:'calvo',goatee:1,jacket:'#6B46C1',pants:'#26324a'}};
+const ANAME={boehm:'BOEHM',mcconnell:'MCCONNELL',cohn:'COHN',pressman:'PRESSMAN',sommerville:'SOMMERVILLE'};
+
+/* ======================= OBJETOS ======================= */
+DEF.pc={w:30,h:26,f:g=>{g.r(0,15,30,3,P.wd3);g.r(0,17,30,1,P.wd2);g.r(2,18,3,8,P.wd2);g.r(25,18,3,8,P.wd2);g.r(5,0,20,12,P.g1);g.r(6,1,18,10,P.bl2);g.r(13,12,4,2,P.g2);g.r(9,14,12,1,P.g4);g.r(7,2,9,1,P.bl3);g.r(7,4,13,1,P.bl3);g.r(7,6,7,1,P.gr3);g.r(7,8,11,1,P.bl3);}};
+DEF.rack={w:20,h:40,f:g=>{g.r(0,0,20,40,P.g1);g.r(1,1,18,38,'#2a2a30');for(let i=0;i<7;i++){g.r(2,3+i*5,16,3,P.g2);g.r(10,4+i*5,7,1,P.g3);}g.r(2,38,4,2,P.k);g.r(14,38,4,2,P.k);}};
+DEF.cabinet={w:26,h:38,f:g=>{g.r(0,0,26,38,'#9aa3ad');g.r(0,0,26,2,'#c9d0d6');g.r(13,2,1,36,'#7a838d');g.r(3,5,8,6,P.g1);g.r(16,4,7,8,P.am);g.r(17,5,5,1,P.k);g.r(19,6,1,5,P.k);g.r(3,18,8,1,P.g2);g.r(15,18,8,1,P.g2);g.r(3,24,8,1,P.g2);g.r(15,24,8,1,P.g2);g.r(11,15,1,4,P.k);g.r(14,15,1,4,P.k);g.r(2,34,22,2,'#7a838d');}};
+DEF.motor={w:40,h:22,f:g=>{g.r(2,17,36,5,P.g1);g.r(5,4,26,13,P.bl2);g.r(5,4,26,3,P.bl);for(let i=0;i<6;i++)g.r(8+i*4,7,1,10,shade(P.bl2,-.3));g.r(31,8,5,6,P.g3);g.r(36,9,4,4,P.g4);g.r(10,0,8,4,P.g2);g.r(12,1,4,2,'#d4d8de');}};
+DEF.conveyor={w:64,h:12,f:g=>{g.r(0,0,64,5,P.g1);g.r(0,0,64,1,P.g3);g.r(2,5,3,7,P.g2);g.r(30,5,3,7,P.g2);g.r(59,5,3,7,P.g2);}};
+DEF.sample={w:28,h:24,f:g=>{g.r(0,12,28,3,P.g4);g.r(2,15,3,9,P.g3);g.r(23,15,3,9,P.g3);g.r(5,1,7,11,'#9fd8c7');g.r(6,0,5,2,P.r);g.r(5,6,7,3,'#ffffff');g.r(15,4,7,7,'#d4d8de');g.r(16,5,5,5,'#cfe8f7');g.r(21,10,4,2,P.wd2);g.p(18,6,P.k);g.p(19,7,P.k);}};
+DEF.docs={w:26,h:22,f:g=>{g.r(0,6,18,16,'#e8c26a');g.r(0,4,7,3,'#e8c26a');g.r(1,8,16,13,'#f2d48a');g.r(8,2,18,20,'#ffffff');g.r(8,2,18,1,P.g4);for(let i=0;i<6;i++)g.r(10,5+i*3,i%2?10:14,1,P.g3);g.r(19,17,6,4,P.r);}};
+DEF.board={w:40,h:28,f:g=>{g.r(0,0,40,28,P.g3);g.r(1,1,38,26,'#ffffff');g.r(4,18,5,6,P.bl);g.r(10,13,5,11,P.r);g.r(16,9,5,15,P.gr);g.r(22,15,5,9,P.am);g.r(29,5,8,1,P.g3);g.r(29,9,7,1,P.g3);g.r(29,13,8,1,P.g3);}};
+DEF.poster={w:24,h:30,f:g=>{g.r(0,0,24,30,'#ffffff');g.r(2,2,20,4,P.r);g.r(2,9,20,1,P.g3);g.r(2,12,16,1,P.g3);g.r(2,15,20,1,P.g3);g.r(3,19,7,7,P.bl);g.r(13,19,8,7,P.gr);}};
+DEF.calendar={w:22,h:22,f:g=>{g.r(0,0,22,22,'#ffffff');g.r(0,0,22,5,P.r);g.p(5,-1,P.g2);for(let j=0;j<4;j++)for(let i=0;i<5;i++)g.r(2+i*4,7+j*4,2,2,(i===4)?P.r:P.g4);}};
+DEF.map={w:40,h:28,f:g=>{g.r(0,0,40,28,P.wd2);g.r(1,1,38,26,'#e9e2c9');g.r(4,4,14,9,'#b9d8a8');g.r(16,12,16,10,'#d7c99a');g.r(24,4,10,6,'#a9cbe0');g.r(20,11,7,5,P.r);g.r(5,21,9,1,P.g3);g.r(5,23,6,1,P.g3);}};
+DEF.monitor={w:40,h:26,f:g=>{g.r(0,0,40,22,P.g1);g.r(1,1,38,20,P.lcd);g.r(3,3,10,1,P.gr);g.r(18,22,4,4,P.g2);}};
+DEF.window={w:40,h:30,f:g=>{g.r(0,0,40,30,P.g2);g.r(1,1,38,28,P.sky);g.r(1,1,38,8,P.sky2);g.r(19,1,2,28,P.g2);g.r(1,14,38,1,P.g2);for(let i=0;i<5;i++)g.r(4+i*7,3,2,24,'#fff6c8');}};
+DEF.clip={w:20,h:26,f:g=>{g.r(0,2,20,24,P.wd3);g.r(2,4,16,20,'#ffffff');g.r(7,0,6,4,P.g3);g.r(8,1,4,2,P.g4);g.t('T°C',3,6,P.k);for(let i=0;i<5;i++){g.r(3,13+i*2,14,1,P.g4);if(i<3){g.r(4,13+i*2-1,3,1,P.bl);g.r(10,13+i*2-1,3,1,P.bl);}}g.r(3,13,1,9,P.g4);g.r(9,13,1,9,P.g4);}};
+DEF.tower={w:18,h:56,f:g=>{for(let i=0;i<50;i++){const w=Math.round(1+i/8);g.p(9-w,6+i,P.g2);g.p(8+w,6+i,P.g2);if(i%6===0)g.r(9-w,6+i,w*2,1,P.g2);}g.r(7,0,4,6,P.g3);g.r(4,2,3,4,P.g4);g.r(11,2,3,4,P.g4);}};
+DEF.slope={w:56,h:22,f:g=>{for(let i=0;i<56;i++){const h=Math.round(6+i*0.22);g.r(i,22-h,1,h,'#6b8f3a');}g.r(0,18,56,4,'#7a6a55');g.r(8,19,10,1,P.k);g.r(17,20,1,2,P.k);g.r(26,18,12,1,P.k);g.r(33,19,1,3,P.k);g.r(44,2,2,10,P.wd2);g.r(41,0,8,4,P.gr2);}};
+DEF.amr={w:30,h:16,f:g=>{g.r(0,4,30,9,P.g1);g.r(0,4,30,2,P.am);g.r(2,13,5,3,P.k);g.r(23,13,5,3,P.k);g.r(6,0,18,4,'#c9a77c');g.r(6,0,18,1,'#e0c39b');g.r(13,7,4,2,P.bl3);}};
+DEF.fridge={w:26,h:42,f:g=>{g.r(0,0,26,42,'#eef2f6');g.r(0,0,26,7,'#d6dde5');g.r(2,2,10,4,P.lcd);g.r(2,8,22,30,'#bfe0f2');g.r(3,9,20,28,'#d9eef9');for(let s=0;s<4;s++){g.r(3,15+s*6,20,1,P.g4);for(let v=0;v<6;v++){g.r(4+v*3,12+s*6,2,3,v%2?P.bl:'#ffffff');g.p(4+v*3,12+s*6,P.bl2);}}g.r(22,18,1,8,P.g3);g.r(2,39,4,3,P.g2);g.r(20,39,4,3,P.g2);g.r(15,2,4,4,P.gr);}};
+DEF.shelf={w:36,h:40,f:g=>{g.r(0,0,3,40,P.bl2);g.r(33,0,3,40,P.bl2);for(let i=0;i<3;i++){g.r(0,11+i*13,36,2,P.am2);g.r(4,3+i*13,9,8,'#c9a77c');g.r(14,5+i*13,8,6,P.g4);g.r(23,3+i*13,9,8,'#b48f60');}}};
+DEF.face={w:44,h:34,f:g=>{g.r(0,0,44,34,'#2e2824');for(let j=0;j<34;j+=2)for(let i=(j%4)?1:0;i<44;i+=3)g.p(i,j,'#3d362f');g.r(4,10,36,3,'#141210');g.r(6,22,24,2,'#141210');g.r(30,3,11,12,P.g3);g.r(31,4,9,10,P.am);g.r(32,5,7,3,P.lcd);g.t('CH',32,10,P.k);}};
+DEF.drip={w:56,h:22,f:g=>{g.r(0,16,56,6,'#6b4a2b');g.r(0,17,56,1,P.k);for(let i=0;i<6;i++){const bx=2+i*9;g.r(bx+3,7,1,9,P.wd2);g.r(bx,2,8,7,P.gr2);g.r(bx+1,0,6,3,P.gr);g.p(bx+2,4,P.r);g.p(bx+5,6,P.r);}g.r(52,9,3,7,P.g3);g.r(51,8,5,2,P.r);}};
+DEF.camera={w:28,h:28,f:g=>{g.r(0,16,28,3,P.g4);g.r(2,19,3,9,P.g3);g.r(23,19,3,9,P.g3);g.r(4,6,14,10,P.g1);g.r(18,8,7,6,P.k);g.r(19,9,4,4,P.bl);g.p(20,10,'#ffffff');g.r(6,0,3,7,P.g3);g.r(12,0,3,7,P.g3);g.r(6,0,9,2,P.g3);g.r(6,8,9,1,P.gr3);}};
+DEF.devices={w:30,h:24,f:g=>{g.r(0,12,30,3,P.g4);g.r(2,15,3,9,P.g3);g.r(25,15,3,9,P.g3);g.r(1,7,12,5,'#f4f6f8');g.r(4,8,6,2,P.lcd);g.r(16,4,10,8,'#ffffff');g.r(17,5,8,3,P.lcd);g.r(18,9,2,2,P.bl);g.r(22,9,2,2,P.r);g.r(25,6,4,1,P.g2);g.r(27,2,3,5,P.bl2);}};
+const WALL={board:1,poster:1,calendar:1,map:1,monitor:1,window:1,clip:1};
+const ANIM={
+ pc:(x,y,t)=>{const s=Math.floor(t*3)%4;R(x+7,y+3+s*2,8,1,P.gr3);},
+ rack:(x,y,t)=>{for(let i=0;i<7;i++){R(x+3,y+4+i*5,1,1,((Math.floor(t*4)+i)%3)?P.gr3:P.am);R(x+5,y+4+i*5,1,1,((Math.floor(t*5)+i*2)%4)?P.gr:P.r);}},
+ monitor:(x,y,t)=>{X.fillStyle=P.gr3;for(let i=0;i<36;i++){const v=Math.sin((i+t*8)*0.5)*3+Math.sin((i+t*3)*1.7)*2;X.fillRect(x+3+i,y+12+Math.round(v),1,1);}},
+ conveyor:(x,y,t)=>{const off=(t*14)%16;for(let i=0;i<4;i++){const bx=x+1+((i*16+off)%58);R(bx,y-11,6,11,'#9fd8c7');R(bx+1,y-13,4,2,P.r);R(bx,y-7,6,3,'#ffffff');R(bx+5,y-10,1,9,'#6fb8a3');}},
+ fridge:(x,y,t)=>{T((Math.floor(t)%7)===6?'5.2°':'4.8°',x+4,y+3,P.gr3);},
+ face:(x,y,t)=>{T(((Math.floor(t*2))%2)?'0.3%':'0.4%',x+33,y+6,P.gr3);},
+ tower:(x,y,t)=>{R(x+8,y-1,2,1,(Math.floor(t*2)%2)?P.r:P.r4);},
+ amr:(x,y,t)=>{R(x+3,y+7,3,2,(Math.floor(t*3)%2)?P.r:P.r4);},
+ devices:(x,y,t)=>{T('72',x+18,y+6,P.gr3);T(((Math.floor(t*1.5))%3)?'68':'69',x+5,y+9,P.gr3);}};
+const SZ=n=>(n==='person'||n==='mentor')?[16,32]:[DEF[n].w,DEF[n].h];
+
+/* ======================= ESCENARIOS ======================= */
+const SIGN={office:'PISO 8 · PMBOK 8',factory:'BAHIA BOEHM',hospital:'SALA PRESSMAN',warehouse:'MUELLE COHN',field:'ESTACION SOMMERVILLE',mine:'NIVEL MCCONNELL',lab:'LAB BOEHM'};
+const BGC={};
+function mountains(y,c1,c2){X.fillStyle=c1;for(let i=0;i<W;i++){const h=Math.round(18+10*Math.sin(i*0.031)+6*Math.sin(i*0.083+1)+3*Math.sin(i*0.21));X.fillRect(i,y-h,1,h);}X.fillStyle=c2;for(let i=0;i<W;i++){const h=Math.round(10+6*Math.sin(i*0.05+2)+3*Math.sin(i*0.17));X.fillRect(i,y-h,1,h);}}
+function floorTiles(y,c1,c2,s){R(0,y,W,H-y,c1);X.fillStyle=c2;for(let j=y;j<H;j+=s)X.fillRect(0,j,W,1);for(let i=0;i<W;i+=s*2)X.fillRect(i,y,1,H-y);}
+function bg(scene){
+ if(BGC[scene])return BGC[scene];const c=document.createElement('canvas');c.width=W;c.height=H;const pv=X;X=c.getContext('2d');
+ if(scene==='office'||scene==='hq'){
+  R(0,0,W,108,'#ece8e1');D(0,100,W,8,'#ece8e1','#ddd7cd');R(0,108,W,2,P.wd2);floorTiles(110,'#b9b2a7','#a9a196',12);
+  for(const wx of (scene==='hq'?[196,256]:[150,232])){R(wx,12,56,46,P.g2);R(wx+2,14,52,42,P.sky2);X.save();X.beginPath();X.rect(wx+2,14,52,42);X.clip();mountains(56,'#8fb3a0','#6f957f');for(let i=0;i<5;i++)R(wx+6+i*9,42-(i%3)*6,6,14+(i%3)*6,'#9aa8b8');X.restore();R(wx+27,14,2,42,P.g2);}
+  R(0,0,W,6,'#d6d0c5');for(let i=20;i<W;i+=80)R(i,6,30,2,'#fffbe8');
+  if(scene==='hq'){R(8,20,66,80,P.wd2);for(let s=0;s<3;s++){R(10,50+s*22,62,2,P.wd);let bx=12;const cs=[P.r,P.bl,P.gr,P.am,P.k,'#7a4fb5',P.r2,P.bl2];for(let b=0;b<10;b++){const h=14+(b*7+s*3)%6;R(bx,50+s*22-h,5,h,cs[(b+s*2)%cs.length]);bx+=6;}}
+   R(10,22,62,9,P.k);T('BIBLIOTECA',14,24,P.w);
+   R(86,18,96,48,P.g3);R(87,19,94,46,P.w);T('CONO DE INCERTIDUMBRE',90,22,P.k);X.fillStyle=P.r;for(let i=0;i<70;i++){const k=Math.round(14*(1-i/70));X.fillRect(96+i,44-k,1,1);X.fillRect(96+i,45+k,1,1);}T('4X',88,30,P.g2);T('0.25X',88,50,P.g2);T('BOEHM · MCCONNELL',104,58,P.r2);}
+ } else if(scene==='factory'){R(0,0,W,108,'#3b3f46');for(let i=0;i<W;i+=16)R(i,0,1,108,'#33373d');for(let i=10;i<W;i+=60){R(i,8,40,16,'#9fc3d9');R(i+19,8,2,16,'#3b3f46');}R(0,100,W,8,P.am);for(let i=0;i<W;i+=8)R(i,100,4,8,P.k);floorTiles(108,'#8b8d90','#7b7d80',14);}
+ else if(scene==='hospital'){R(0,0,W,108,'#e4f1ee');R(0,72,W,36,'#cfe6e1');R(0,72,W,1,'#b5d6cf');floorTiles(108,'#c7d3e0','#b5c3d2',12);R(278,18,30,30,P.w);R(278,18,30,1,P.g4);R(290,22,6,22,P.r);R(282,30,22,6,P.r);}
+ else if(scene==='lab'){R(0,0,W,108,'#eef2f6');for(let i=0;i<W;i+=24)R(i,0,1,108,'#e1e7ee');floorTiles(108,'#d6dde5','#c5ced8',10);R(0,104,W,4,P.bl3);R(270,20,40,24,P.w);R(270,20,40,1,P.g4);T('2-8°C',276,28,P.bl2);}
+ else if(scene==='warehouse'){R(0,0,W,108,'#585b60');for(let k=0;k<W;k+=52){R(k+4,10,44,98,'#4a4d52');for(let s=0;s<4;s++){R(k+4,30+s*20,44,2,P.am2);for(let b=0;b<4;b++)R(k+7+b*10,22+s*20,8,8,['#c9a77c','#b48f60','#d9b98a'][(b+s+k)%3]);}}floorTiles(108,'#9a9a95','#8c8c87',16);for(let i=0;i<W;i+=20)R(i,140,10,2,P.am);}
+ else if(scene==='field'){for(let j=0;j<92;j++)R(0,j,W,1,j<40?P.sky:(j<70?'#b6dcf2':P.sky2));mountains(94,'#7fa2b8','#5f8a76');R(0,94,W,86,'#6f9a42');D(0,124,W,56,'#628a3a','#6f9a42');R(10,62,44,32,'#d9c3a0');R(8,58,48,6,P.r2);R(28,78,8,16,P.wd2);}
+ else if(scene==='mine'){R(0,0,W,H,'#1d1a18');D(0,0,W,108,'#26211d','#1d1a18');for(let i=0;i<W;i+=64){R(i+4,8,6,100,P.wd2);R(i+54,8,6,100,P.wd2);R(i+4,8,56,6,P.wd);}R(0,108,W,72,'#2c2622');D(0,108,W,72,'#2c2622','#35302b');R(0,166,W,2,P.g3);R(0,173,W,2,P.g3);for(let i=0;i<W;i+=10)R(i,164,4,14,P.wd2);}
+ if(SIGN[scene])plate(scene==='field'?10:6,scene==='field'?48:4,SIGN[scene],scene==='mine'?P.am:P.k,scene==='mine'?P.k:P.w);
+ X=pv;BGC[scene]=c;return c;
+}
+function ambient(scene,t){
+ if(scene==='field'){X.globalAlpha=0.9;for(let i=0;i<3;i++){const cx=((t*4+i*120)%380)-40;R(cx,14+i*10,24,4,P.w);R(cx+4,11+i*10,14,3,P.w);}X.globalAlpha=1;}
+ if(scene==='mine'){for(let i=0;i<5;i++){const lx=32+i*64,f=0.16+0.05*Math.sin(t*9+i*3);X.globalAlpha=f;X.fillStyle='#ffcf6b';X.beginPath();X.arc(lx,20,26,0,7);X.fill();X.globalAlpha=1;R(lx-2,14,4,3,'#ffe9a8');}}
+}
+function drawPerson(x,y,t,o,seedx){const fr={...o,blink:((t*0.8+seedx*0.13)%4)<0.15,breath:(Math.floor(t*1.2+seedx*0.3)%2)===1};X.globalAlpha=0.22;R(x+1,y+32,16,2,'#000');X.globalAlpha=1;X.drawImage(sprite('person',fr),x-1,y-1);}
+function drawTag(cx,y,txt,bg,fg){const w=TW(txt)+6;plate(Math.max(2,Math.min(W-w-2,Math.round(cx-w/2))),y,txt,bg,fg);}
+
+/* ======================= ESCENA INTERACTIVA ======================= */
+function Scene(canvas,opts){
+ this.c=canvas;this.o=opts;this.t=0;this.hover=-1;this.run=true;canvas.width=W;canvas.height=H;const ctx=canvas.getContext('2d');ctx.imageSmoothingEnabled=false;this.ctx=ctx;
+ const hs=opts.hot||[];
+ this.items=hs.map((h,i)=>{const [w,hh]=SZ(h.sp);const cx=opts.hqLayout?(104+i*44):(h.sp==='mentor'?298:(70+i*58));let x=Math.round(cx-w/2),y;
+  if(WALL[h.sp])y=(opts.scene==='field'||opts.scene==='mine')?(78-hh):30;else y=(h.sp==='person'||h.sp==='mentor'?160:162)-hh+((i%2)?5:0);
+  if(h.sp==='conveyor')y=150;
+  return {...h,x,y,w,h:h.sp==='conveyor'?12:hh,i};});
+ const pos=e=>{const r=canvas.getBoundingClientRect();return[(e.clientX-r.left)/r.width*W,(e.clientY-r.top)/r.height*H];};
+ const hit=(px,py)=>{for(let k=this.items.length-1;k>=0;k--){const it=this.items[k],top=it.sp==='conveyor'?it.y-14:it.y;if(px>=it.x-3&&px<=it.x+it.w+3&&py>=top-10&&py<=it.y+it.h+3)return k;}return -1;};
+ canvas.addEventListener('mousemove',e=>{const[px,py]=pos(e);this.hover=hit(px,py);canvas.style.cursor=this.hover>=0?'pointer':'default';});
+ canvas.addEventListener('mouseleave',()=>{this.hover=-1;});
+ canvas.addEventListener('click',e=>{const[px,py]=pos(e);const k=hit(px,py);if(k>=0&&opts.onPick)opts.onPick(k);});
+ const loop=ts=>{if(!this.run)return;this.t=ts/1000;this.draw();requestAnimationFrame(loop);};requestAnimationFrame(loop);
+}
+Scene.prototype.stop=function(){this.run=false;};
+Scene.prototype.draw=function(){
+ const pv=X;X=this.ctx;const t=this.t,o=this.o;X.drawImage(bg(o.scene),0,0);ambient(o.scene,t);
+ if(o.extra)o.extra(X,t);
+ if(o.me){drawPerson(14,128,t,{...o.me,badge:1},0);drawTag(22,116,'TU',P.r,P.w);}
+ const seen=o.seen||[];
+ this.items.forEach((it,k)=>{
+  if(WALL[it.sp]&&(o.scene==='field'||o.scene==='mine')){R(it.x+4,it.y+it.h,2,112-it.y-it.h,P.wd2);R(it.x+it.w-6,it.y+it.h,2,112-it.y-it.h,P.wd2);}
+  if(it.sp==='person')drawPerson(it.x,it.y,t,it.pal||{},k+1);
+  else if(it.sp==='mentor'){drawPerson(it.x,it.y,t,{...LOOK[it.who]},k+7);drawTag(it.x+8,it.y-24,ANAME[it.who],P.k,P.am);}
+  else{X.drawImage(sprite(it.sp),it.x-1,it.y-1);if(ANIM[it.sp])ANIM[it.sp](it.x,it.y,t);}
+  const top=it.sp==='conveyor'?it.y-14:it.y,cx=Math.round(it.x+it.w/2);
+  if(it.sp!=='mentor'){const by=top-9+Math.round(Math.sin(t*4+k));
+   if(!seen.includes(k)){R(cx-4,by,9,8,P.k);R(cx-3,by+1,7,6,P.r);R(cx,by+2,1,2,P.w);R(cx,by+5,1,1,P.w);}
+   else{R(cx-4,top-9,9,7,P.gr2);R(cx-2,top-6,1,1,P.w);R(cx-1,top-5,1,1,P.w);R(cx,top-6,1,1,P.w);R(cx+1,top-7,1,1,P.w);R(cx+2,top-8,1,1,P.w);}}
+  else if(!seen.includes(k)){const by=it.y-14+Math.round(Math.sin(t*3));R(cx-6,by,13,8,P.w);R(cx-6,by,13,1,P.k);R(cx-6,by+7,13,1,P.k);R(cx-6,by,1,8,P.k);R(cx+6,by,1,8,P.k);T('...',cx-5,by+2,P.k);}
+  if(k===this.hover){const x0=it.x-3,y0=top-3,x1=it.x+it.w+2,y1=it.y+it.h+2;X.fillStyle=P.r;[[x0,y0],[x1-3,y0],[x0,y1],[x1-3,y1]].forEach(([a,b])=>X.fillRect(a,b,4,1));[[x0,y0],[x1,y0],[x0,y1-3],[x1,y1-3]].forEach(([a,b])=>X.fillRect(a,b,1,4));
+   const lab=it.sp==='mentor'?'MENTOR · '+ANAME[it.who]:it.n,lw=TW(lab)+6,lx=Math.max(2,Math.min(W-lw-2,cx-lw/2));R(lx,4,lw,9,P.k);T(lab,lx+3,6,P.w);}
+ });
+ X.globalAlpha=0.05;for(let j=0;j<H;j+=2)R(0,j,W,1,'#000');X.globalAlpha=1;X=pv;
+};
+/* Oficina XPerta con los cinco mentores */
+function HQ(canvas,me){const who=['boehm','mcconnell','cohn','pressman','sommerville'];
+ return new Scene(canvas,{scene:'hq',me,seen:[0,1,2,3,4],hot:who.map((w,i)=>({sp:'mentor',who:w,n:w})),extra:null,hqLayout:true});}
+/* retrato de cuerpo completo ampliado (creador de personaje) */
+function preview(canvas,me,scale){scale=scale||6;const s=sprite('person',{...me,badge:1});canvas.width=s.width*scale;canvas.height=s.height*scale;const x=canvas.getContext('2d');x.imageSmoothingEnabled=false;x.clearRect(0,0,canvas.width,canvas.height);x.drawImage(s,0,0,canvas.width,canvas.height);}
+/* busto 16×16 estilo plantilla (HUD, informe) */
+function bustURL(o,s){const g=grid(16,16);const tmp=grid(16,32);bodyGrid(tmp,{...o,badge:1});for(let y=0;y<16;y++)for(let x=0;x<16;x++)g.p(x,y,tmp.G[y][x]);return toCanvas(outlined(g.G),s||6).toDataURL();}
+function faceURL(id,s){if(id==='pmbok')return mascotURL(s);return bustURL(LOOK[id],s);}
+function mascotURL(s){const g=grid(16,16),Rr=P.r,Dd=P.r2,Ww='#ffffff',K=P.k;g.r(3,1,10,12,Rr);g.r(3,1,1,12,Dd);g.r(13,2,1,11,Ww);g.r(4,13,10,1,'#e8e8e8');g.r(7,2,3,1,Ww);g.p(6,3,Ww);g.p(10,3,Ww);g.r(7,4,3,1,Ww);g.p(6,5,Ww);g.p(10,5,Ww);g.r(7,6,3,1,Ww);g.r(5,8,2,2,Ww);g.p(6,9,K);g.r(10,8,2,2,Ww);g.p(11,9,K);g.r(7,11,3,1,Dd);g.p(2,8,Rr);g.p(1,9,Rr);g.p(14,8,Rr);g.p(15,7,Rr);g.r(5,14,2,1,K);g.r(10,14,2,1,K);return toCanvas(outlined(g.G),s||6).toDataURL();}
+window.PX={Scene,HQ,preview,bustURL,faceURL,LOOK,SKIN,HAIR,JACK,P,W,H};
+})();
+</script>
+<script>/* ===== XPerta · entrada 3D: vóxeles que se ensamblan y se aplanan en píxeles ===== */
+(function(){
+'use strict';
+const GL={X:['10001','10001','01010','00100','01010','10001','10001'],P:['11110','10001','10001','11110','10000','10000','10000'],
+ E:['11111','10000','10000','11110','10000','10000','11111'],R:['11110','10001','10001','11110','10100','10010','10001'],
+ T:['11111','00100','00100','00100','00100','00100','00100'],A:['01110','10001','10001','11111','10001','10001','10001']};
+function Intro(host){
+ this.ok=!!window.THREE;this.host=host;if(!this.ok)return;
+ const T3=THREE, reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
+ const r=new T3.WebGLRenderer({antialias:true,alpha:true});r.setPixelRatio(Math.min(2,devicePixelRatio));host.appendChild(r.domElement);
+ const sc=new T3.Scene();sc.fog=new T3.Fog(0x141414,22,60);
+ const cam=new T3.PerspectiveCamera(42,1,0.1,200);cam.position.set(0,0,34);
+ sc.add(new T3.HemisphereLight(0xffffff,0x220000,0.75));const dl=new T3.DirectionalLight(0xffffff,0.9);dl.position.set(8,12,16);sc.add(dl);
+ const rl=new T3.PointLight(0xE50914,2.2,60);rl.position.set(-10,-6,12);sc.add(rl);
+ const g=new T3.Group();g.position.y=6;sc.add(g);
+ const geo=new T3.BoxGeometry(0.92,0.92,0.92);
+ const mR=new T3.MeshStandardMaterial({color:0xE50914,roughness:0.45,metalness:0.15}),mD=new T3.MeshStandardMaterial({color:0xB20710,roughness:0.5}),mW=new T3.MeshStandardMaterial({color:0xffffff,roughness:0.35});
+ const word='XPERTA',cubes=[];let ox=-(word.length*6-1)/2;
+ [...word].forEach((ch,li)=>{GL[ch].forEach((row,y)=>[...row].forEach((b,x)=>{if(b!=='1')return;
+  const m=new T3.Mesh(geo,(x+y+li)%7===0?mW:((x+y)%3===0?mD:mR));
+  const tx=ox+li*6+x,ty=3-y,tz=0;const a=Math.random()*Math.PI*2,rad=18+Math.random()*16;
+  m.userData={t:new T3.Vector3(tx,ty,tz),s:new T3.Vector3(Math.cos(a)*rad,Math.sin(a)*rad*0.6,(Math.random()-0.5)*30),d:Math.random()*0.9+li*0.08,rx:Math.random()*6,ry:Math.random()*6};
+  m.position.copy(m.userData.s);g.add(m);cubes.push(m);}));});
+ // partículas de fondo (píxeles flotantes)
+ const N=500,pos=new Float32Array(N*3);for(let i=0;i<N;i++){pos[i*3]=(Math.random()-0.5)*90;pos[i*3+1]=(Math.random()-0.5)*50;pos[i*3+2]=-Math.random()*40-5;}
+ const pg=new T3.BufferGeometry();pg.setAttribute('position',new T3.BufferAttribute(pos,3));
+ const pts=new T3.Points(pg,new T3.PointsMaterial({color:0xE50914,size:0.22,transparent:true,opacity:0.7}));sc.add(pts);
+ // rejilla inferior
+ const grid=new T3.GridHelper(80,40,0xE50914,0x3a1013);grid.position.y=-9;grid.material.transparent=true;grid.material.opacity=0.35;sc.add(grid);
+ let mx=0,my=0,t0=performance.now(),mode='build',flatT=0,run=true;
+ addEventListener('pointermove',e=>{mx=e.clientX/innerWidth-0.5;my=e.clientY/innerHeight-0.5;});
+ const size=()=>{const w=host.clientWidth,h=host.clientHeight;r.setSize(w,h);cam.aspect=w/h;cam.position.z=w<700?62:34;g.position.y=w<700?11:6;cam.updateProjectionMatrix();};size();addEventListener('resize',size);
+ const ease=x=>1-Math.pow(1-x,3), back=x=>{const c1=1.70158,c3=c1+1;return 1+c3*Math.pow(x-1,3)+c1*Math.pow(x-1,2);};
+ const tick=()=>{if(!run)return;const t=(performance.now()-t0)/1000;
+  cubes.forEach((m,i)=>{const u=m.userData;let k=reduce?1:Math.min(1,Math.max(0,(t-u.d)/1.6));
+   if(mode==='build'){const e=back(k);m.position.lerpVectors(u.s,u.t,e);m.rotation.set(u.rx*(1-ease(k)),u.ry*(1-ease(k)),0);
+    if(k>=1&&!reduce){m.position.z=Math.sin(t*1.5+u.t.x*0.4)*0.35;}}
+   else{const f=Math.min(1,flatT);m.position.z=u.t.z*(1-f);m.scale.z=1-0.92*f;m.position.y=u.t.y+(Math.sin(i)*0.0);}
+  });
+  if(mode==='flat'){flatT+=0.025;g.rotation.y*=0.9;g.rotation.x*=0.9;cam.position.z-=0.12;}
+  else{g.rotation.y+=(mx*0.6-g.rotation.y)*0.05;g.rotation.x+=(my*0.35-g.rotation.x)*0.05;}
+  // destello: algunos cubos saltan
+  if(mode==='build'&&!reduce&&t>3&&Math.random()<0.02){const c=cubes[(Math.random()*cubes.length)|0];c.position.z+=1.5;}
+  pts.rotation.y=t*0.02;grid.position.z=(t*2)%2;
+  r.render(sc,cam);requestAnimationFrame(tick);};
+ tick();
+ this.flatten=cb=>{mode='flat';setTimeout(()=>{run=false;cb&&cb();},reduce?50:1100);};
+ this.stop=()=>{run=false;try{r.dispose();}catch(e){}};
+}
+window.Intro=Intro;
+})();
+</script>
+<script>/* ===== XPerta v2 · interfaz y flujo ===== */
+(function(){
+'use strict';
+const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)],app=$('#app');
+const h=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const M=v=>(v<0?'−':'')+Math.abs(v).toLocaleString('es-CO',{maximumFractionDigits:0})+' M';
+const pct=v=>Math.round(v*100)+' %',f1=v=>(Math.round(v*10)/10).toLocaleString('es-CO');
+const LS={get(k,d){try{return localStorage.getItem(k)??d;}catch(e){return d;}},set(k,v){try{localStorage.setItem(k,v);}catch(e){}}};
+const NC=XP.N_CASES,LV=XP.LV;
+const LVD={1:'Tecnología conocida, pocas integraciones',2:'Algunas integraciones o datos por resolver',3:'Dominio exigente o tecnología especializada',4:'Crítico: seguridad de personas, regulación o I+D'};
+const AUT={
+ boehm:{n:'Barry Boehm',w:'Software Engineering Economics (1981) · COCOMO II (2000)',i:'Creó COCOMO y describió cómo la incertidumbre de una estimación se reduce a medida que avanza el proyecto.',tip:'Al inicio, una estimación puede variar entre 0,25x y 4x: es el cono de incertidumbre. Lo que estrecha el rango es información: visita, pregunta, investiga.'},
+ mcconnell:{n:'Steve McConnell',w:'Software Estimation: Demystifying the Black Art (2006)',i:'Popularizó el cono de incertidumbre y la distinción entre estimación, objetivo y compromiso.',tip:'El presupuesto que trae el cliente es un objetivo, no una estimación. Estima primero; negocia después, con tus supuestos en la mano.'},
+ cohn:{n:'Mike Cohn',w:'Agile Estimating and Planning (2005)',i:'Difundió la estimación relativa con story points, planning poker y la planificación por velocidad.',tip:'Divide el trabajo en partes que puedas comparar con algo que ya hiciste. Estimar por partes y en relativo reduce el error.'},
+ pressman:{n:'Roger S. Pressman',w:'Software Engineering: A Practitioner\'s Approach',i:'Estructuró la ingeniería de software como disciplina: proceso, calidad y gestión del proyecto.',tip:'Pruebas, validación y calidad no son lo que sobra al final. Si hay hardware, datos o regulación, pesan desde el desglose.'},
+ sommerville:{n:'Ian Sommerville',w:'Software Engineering (10.ª ed., 2015)',i:'Énfasis en sistemas críticos, confiabilidad y seguridad, donde el análisis de riesgos condiciona el desarrollo.',tip:'Pregúntate qué pasa si el sistema falla. Si la respuesta involucra la salud o la seguridad de personas, la complejidad cambia de categoría.'},
+ pmbok:{n:'PMBOK 8 · PMI',w:'Guía PMBOK, 8.ª edición (2025)',i:'Seis principios y siete dominios de desempeño: Gobernanza, Alcance, Cronograma, Finanzas, Interesados, Recursos y Riesgo.',tip:'Mira el proyecto como un sistema: alcance, cronograma, finanzas, recursos, riesgo e interesados se mueven juntos.'}};
+const AIDS=Object.keys(AUT);
+const FACE={};const face=(id,s)=>FACE[id+(s||6)]||(FACE[id+(s||6)]=PX.faceURL(id,s||6));
+const fimg=(id,px)=>`<img class="px" src="${face(id)}" width="${px}" height="${px}" alt="">`;
+const POSTS=[['mcconnell','Estimar ≠ comprometerse'],['boehm','Cono de incertidumbre: 0,25x – 4x'],['cohn','Tamaño relativo, velocidad real'],['pressman','La calidad se diseña desde el inicio'],['sommerville','Sistemas críticos: primero el riesgo'],['pmbok','Valor y visión holística'],['boehm','COCOMO: el tamaño manda, los multiplicadores deciden'],['mcconnell','Rango + supuestos > número exacto']];
+let S=null,cur=null,scene=null,tick=null,intro=null;
+
+/* ---------------- INTRO ---------------- */
+function showIntro(){
+ const el=$('#intro');el.hidden=false;
+ try{intro=new Intro(el.querySelector('.stage'));if(!intro.ok)el.classList.add('nogl');}catch(e){el.classList.add('nogl');}
+ const nm=$('#nm');nm.value=LS.get('xperta_name','');
+ const go=()=>{const v=nm.value.trim();if(v.length<2){nm.focus();nm.style.borderColor='#E50914';return;}
+  LS.set('xperta_name',v);const done=()=>{el.hidden=true;if(intro&&intro.stop)intro.stop();creator(v);};
+  if(intro&&intro.flatten){el.querySelector('.panel').style.opacity='0';intro.flatten(done);}else done();};
+ $('#go').onclick=go;nm.onkeydown=e=>{if(e.key==='Enter')go();};
+}
+
+/* ---------------- CREADOR DE PERSONAJE ---------------- */
+const HS={f:[['largo','Largo'],['cola','Cola de caballo'],['melena','Melena corta'],['rizado','Rizado']],m:[['corto','Corto'],['lateral','Peinado lateral'],['rizado','Rizado'],['rapado','Rapado']]};
+function creator(name){
+ let me;try{me=JSON.parse(LS.get('xperta_me','null'));}catch(e){me=null;}
+ me=me||{g:'f',hs:'cola',hair:PX.HAIR[1],skin:PX.SKIN[2],jacket:PX.JACK.rojo,bottom:'pantalon',glasses:0};
+ const draw=()=>{
+  app.innerHTML=`<main class="wrap"><section class="creator">
+  <div class="cpv"><div class="kicker">Credencial XPerta</div><canvas id="pv" class="px" aria-label="Vista previa del personaje"></canvas>
+   <div class="badge"><img class="px" src="${PX.bustURL(me,4)}" width="64" height="64" alt=""><div><b>${h(name)}</b><span>Gerencia de estimación</span></div></div></div>
+  <div class="cop"><h2 class="disp">Crea tu personaje</h2><p class="muted">Así te verán los clientes en cada visita.</p>
+   ${grp('Personaje','g',[['f','Mujer'],['m','Hombre']])}
+   ${grp('Peinado','hs',HS[me.g])}
+   <div class="cg"><span class="cl">Color de cabello</span><div class="sw">${PX.HAIR.map(c=>`<button class="swc ${me.hair===c?'on':''}" data-k="hair" data-v="${c}" style="background:${c}" aria-label="Cabello ${c}"></button>`).join('')}</div></div>
+   <div class="cg"><span class="cl">Tono de piel</span><div class="sw">${PX.SKIN.map(c=>`<button class="swc ${me.skin===c?'on':''}" data-k="skin" data-v="${c}" style="background:${c}" aria-label="Piel ${c}"></button>`).join('')}</div></div>
+   ${grp('Chaqueta','jacket',Object.entries(PX.JACK).map(([k,v])=>[v,k[0].toUpperCase()+k.slice(1)]))}
+   ${grp('Prenda inferior','bottom',[['pantalon','Pantalón'],['falda','Falda']])}
+   ${grp('Gafas','glasses',[[0,'No'],[1,'Sí']])}
+   <div class="actions"><button class="btn" id="ok">Entrar a la oficina ▸</button></div></div></section></main>`;
+  PX.preview($('#pv'),me,7);
+  $$('.creator [data-k]').forEach(b=>b.onclick=()=>{const k=b.dataset.k;let v=b.dataset.v;if(k==='glasses')v=+v;me[k]=v;if(k==='g'){me.hs=HS[v][0][0];me.bottom=v==='f'?'falda':'pantalon';}draw();});
+  $('#ok').onclick=()=>{LS.set('xperta_me',JSON.stringify(me));start(name,me);};
+ };
+ const grp=(lab,k,opts)=>`<div class="cg"><span class="cl">${lab}</span><div class="seg2">${opts.map(([v,t])=>`<button class="${String(me[k])===String(v)?'on':''}" data-k="${k}" data-v="${v}">${t}</button>`).join('')}</div></div>`;
+ draw();
+}
+
+/* ---------------- PARTIDA ---------------- */
+function start(name,me){
+ const seed=(Date.now()^[...name].reduce((a,c)=>a*31+c.charCodeAt(0)|0,7))>>>0;
+ S={name,me,seed,run:XP.buildRun(seed),i:0,D:[],T:[],t0:Date.now()};brief();
+}
+function state(){const pay=new Set(),inv=new Set();let cash=XP.START_CASH;
+ S.D.forEach(d=>{if(!d.neg||!d.neg.won)return;const pv=XP.preview(d,pay,inv);cash-=pv.fees+pv.eqc;pay.forEach(s=>{if(!d.specs.includes(s))cash-=XP.BENCH;});d.specs.forEach(s=>pay.add(s));d.eqs.forEach(e=>inv.add(e));});
+ if(S.res)cash=S.res.cash;return {pay,inv,cash};}
+function clock(){const s=Math.floor((Date.now()-S.t0)/1000);return Math.floor(s/60)+':'+String(s%60).padStart(2,'0');}
+function hud(){const st=state();
+ return `<header class="hud"><div class="wrap"><img class="px" src="${PX.bustURL(S.me,3)}" width="34" height="34" alt=""><span class="logo">XPERTA</span><span class="who">${h(S.name)} · Gerencia de estimación</span>
+ <div class="stats">${S.i<NC&&!S.res?`<span class="stat"><i>Contrato</i> <b>${S.i+1}/${NC}</b></span>`:''}<span class="stat"><i>Caja</i> <b>${M(st.cash)}</b></span>
+ <span class="stat" title="${h([...st.pay].map(s=>XP.SPEC[s].n).join(', ')||'Ninguno')}"><i>Especialistas</i> <b>${st.pay.size}</b></span>
+ <span class="stat" title="${h([...st.inv].map(e=>XP.EQ[e].n).join(', ')||'Ninguno')}"><i>Equipos</i> <b>${st.inv.size}</b></span>
+ <span class="stat"><i>Tiempo</i> <b id="clk">${clock()}</b></span><button class="gl" id="guide">Guía</button></div></div></header>`;}
+function bindHud(){$('#guide').onclick=guide;}
+function runClock(){clearInterval(tick);tick=setInterval(()=>{const c=$('#clk');if(c)c.textContent=clock();if(cur&&document.visibilityState==='visible'&&Date.now()-cur.last<45000)cur.tl.t++;},1000);}
+function guide(){
+ const m=document.createElement('div');m.className='modal';m.innerHTML=`<div class="mb" role="dialog" aria-label="Guía rápida"><h2 class="disp" style="font-size:38px;margin:0 0 6px;font-weight:400">Guía rápida</h2>
+ <ul><li><b>Visita y reunión:</b> toca lo que ves en la escena. En la reunión con el cliente solo hay tiempo para <b>3 preguntas</b>: elige bien.</li>
+ <li><b>Desglose del trabajo (WBS):</b> estima cada componente en persona-mes (PM). XPerta suma 10 % de gestión del proyecto.</li>
+ <li><b>Rango:</b> con los porcentajes optimista y pesimista se arma la estimación de tres puntos (PERT): E = (O + 4M + P) / 6.</li>
+ <li><b>Equipo:</b> un senior cuesta ${XP.RS} M/mes y rinde más; un junior cuesta ${XP.RJ} M/mes y necesita acompañamiento. Duración nominal: 3 · E<sup>1/3</sup> meses; comprimir más de ~25 % es la "zona imposible".</li>
+ <li><b>Especialistas y equipos:</b> se contratan o compran cuando ganas el contrato y quedan disponibles para los siguientes.</li>
+ <li><b>Negociación:</b> el cliente puede pedir ajustes. Valora las propuestas respaldadas con supuestos y riesgos documentados.</li>
+ <li><b>Nadie te dirá si estimaste bien</b> hasta el cierre del trimestre.</li></ul><button class="btn">Entendido</button></div>`;
+ document.body.appendChild(m);const close=()=>m.remove();m.querySelector('.btn').onclick=close;m.onclick=e=>{if(e.target===m)close();};m.querySelector('.btn').focus();}
+
+/* ---------------- OFICINA ---------------- */
+function brief(){
+ window.scrollTo(0,0);
+ app.innerHTML=hud()+`<main class="wrap"><section class="brief">
+ <div class="col"><div class="screen"><canvas id="cv" aria-label="Oficina de XPerta con los cinco mentores"></canvas></div>
+ <div class="mentors big">${AIDS.map(a=>`<button class="mface" data-a="${a}">${fimg(a,48)}<span>${h(AUT[a].n)}</span></button>`).join('')}</div>
+ <div class="bubble" id="bub"><b>${h(AUT.boehm.n)}</b> ${h(AUT.boehm.tip)}</div></div>
+ <div class="dlg"><span class="chip red">Directora de operaciones</span><h2>Bienvenid${S.me.g==='f'?'a':'o'} a XPerta, ${h(S.name)}</h2>
+ <p>Este trimestre llegan <b>${NC} solicitudes de propuesta</b>. Tú decides si las tomamos, con qué capacidad, en cuánto tiempo y a qué precio.</p>
+ <ul><li>Cada contrato trae una <b>solicitud formal</b> del cliente, una <b>visita</b> a sus instalaciones y una <b>reunión</b> en la que solo alcanzas a hacer 3 preguntas.</li>
+ <li><b>${XP.N_RES} contratos son de dominios que XPerta nunca ha trabajado.</b> Tendrás que investigar por tu cuenta. Puedes usar internet.</li>
+ <li>Estimas por <b>desglose del trabajo</b>, armas el equipo (seniors y juniors), eliges el enfoque de entrega y registras los riesgos.</li>
+ <li>Después el cliente responde: puede aceptar, pedir descuento o decir que no le alcanza. Tú decides cómo negociar.</li>
+ <li>Te acompaña un <b>consejo de mentores</b>. Sus consejos son principios, no respuestas.</li></ul>
+ <p class="small muted">Duración sugerida: 35 a 45 minutos. Cuenta la calidad de tus decisiones y cuánto investigaste, no la rapidez.</p>
+ <div class="actions"><button class="btn" id="b1">Abrir la primera solicitud ▸</button><button class="btn ghost" id="b2">Guía rápida</button></div></div></section></main>`;
+ bindHud();$('#b2').onclick=guide;$('#b1').onclick=openCase;
+ $$('.mface').forEach(b=>b.onclick=()=>{const a=b.dataset.a;$('#bub').innerHTML=`<b>${h(AUT[a].n)}</b> ${h(AUT[a].tip)}`;$$('.mface').forEach(x=>x.classList.toggle('on',x===b));});
+ if(scene)scene.stop();scene=PX.HQ($('#cv'),S.me);runClock();
+}
+
+/* ---------------- CASO ---------------- */
+function openCase(){
+ const rc=S.run.cases[S.i],C=XP.BY[rc.id];
+ cur={rc,C,tab:'rfp',
+  d:{lvl:0,specs:[],eqs:[],base:false,c:[0,0,0,0,0,0],a:20,b:40,s:2,j:2,W:20,r:0,m:20,pol:null,ap:null,risks:[]},
+  tc:{lvl:0,wbs:0,cap:0,team:0,ap:0,risk:0,pol:0},
+  tl:{seen:[],qs:[],lib:new Set(),hist:false,wi:0,bit:'',t:0,hotN:C.hot.length},last:Date.now()};
+ renderCase();
+}
+function renderCase(){
+ window.scrollTo(0,0);const {rc,C}=cur,L=XP.limits(rc);
+ app.innerHTML=hud()+`<main class="wrap">
+ <div class="casehead"><div><div class="meta">SOLICITUD ${S.i+1} DE ${NC} · ${h(C.sec.toUpperCase())} · ${h(C.city.toUpperCase())}</div><h2>${h(C.t)}</h2></div>
+ <div style="display:flex;gap:6px;flex-wrap:wrap">${C.res?'<span class="chip red">Dominio nuevo · investiga</span>':''}<span class="chip">${h(C.cli)}</span></div></div>
+ <div class="mentors" aria-label="Consejo de mentores"><span class="kicker" style="align-self:center">Consejo de mentores</span>${AIDS.map(a=>`<button class="mface ${a===rc.mentor?'on':''}" data-a="${a}" title="${h(AUT[a].n)}">${fimg(a,36)}<span>${h(AUT[a].n.split(' ').pop())}</span></button>`).join('')}
+  <div class="bubble" id="bub"><b>${h(AUT[rc.mentor].n)}</b> ${h(AUT[rc.mentor].tip)}</div></div>
+ <div class="grid"><div class="col">
+  <div class="screen" id="scr"><canvas id="cv" aria-label="Instalaciones del cliente: toca los elementos para inspeccionarlos"></canvas><div id="note"></div></div>
+  <div class="hots" id="hots"></div>
+  <div class="card"><div class="tabs" role="tablist">
+   <button data-tab="rfp">Solicitud</button><button data-tab="meet">Reunión <span class="n" id="nq">${cur.tl.qs.length}/3</span></button>
+   <button data-tab="exp">Expediente <span class="n" id="nexp">${cur.tl.seen.length}</span></button>
+   <button data-tab="lib">${C.res?'Investigación':'Historial'}</button><button data-tab="bit">Bitácora</button></div><div class="cb" id="tabb"></div></div>
+ </div>
+ <div class="col"><section class="desk" aria-label="Mesa de estimación">
+  <div class="dh"><span class="t">Mesa de estimación</span><span class="pix tiny" style="color:#ff9aa0">Dominios de desempeño · PMBOK 8</span></div>
+  <div class="sec"><div class="sh"><span class="dom">ALCANCE</span><span class="q">¿Qué tan complejo es?</span><span class="ok" id="ok-lvl"></span></div>
+   <div class="seg" id="lvl">${[1,2,3,4].map(l=>`<button class="opt" data-l="${l}"><b>${LV[l]}</b><span>${LVD[l]}</span></button>`).join('')}</div></div>
+  <div class="sec"><div class="sh"><span class="dom">ALCANCE</span><span class="q">Desglose del trabajo (persona-mes)</span><span class="ok" id="ok-wbs"></span></div>
+   ${XP.COMP.map((c,k)=>sl('c'+k,c[1],0,40,0.5)).join('')}
+   <div class="wbsT" id="wbsT"></div>
+   <div class="foot">${fimg('cohn',18)} Cohn: estima por partes comparables. ${fimg('pressman',18)} Pressman: las pruebas también son trabajo.</div></div>
+  <div class="sec"><div class="sh"><span class="dom">FINANZAS</span><span class="q">Incertidumbre del rango</span></div>
+   ${sl('a','Optimista −%',0,60,5)}${sl('b','Pesimista +%',0,200,5)}<div class="wbsT" id="omp"></div>
+   <div class="foot">${fimg('boehm',18)} Boehm: el ancho del rango depende de cuánto sabes, no de cuánto quieres ganar.</div></div>
+  <div class="sec"><div class="sh"><span class="dom">RECURSOS</span><span class="q">¿Con qué capacidad?</span><span class="ok" id="ok-cap"></span></div>
+   <button class="capbase" id="base"><span class="box"></span><span><b>El equipo inicial es suficiente</b><br><span class="small">Sin especialistas ni equipos adicionales</span></span></button>
+   <div class="lbl"><span>PERSONAL ESPECIALIZADO (máx. 3)</span><span id="cs"></span></div><div class="cats" id="specs"></div>
+   <div class="lbl"><span>EQUIPOS ESPECIALIZADOS (máx. 3)</span><span id="ce"></span></div><div class="cats" id="eqs" style="max-height:220px"></div>
+   <div class="foot">${fimg('sommerville',18)} Sommerville: si una falla afecta a personas, la capacidad cambia.</div></div>
+  <div class="sec"><div class="sh"><span class="dom">RECURSOS</span><span class="q">Equipo de desarrollo</span><span class="ok" id="ok-team"></span></div>
+   ${sl('s','Seniors',0,8,1)}${sl('j','Juniors',0,8,1)}
+   <div class="foot">Ley de Brooks: cada persona agrega comunicación; muchos juniors sin seniors rinden menos.</div></div>
+  <div class="sec"><div class="sh"><span class="dom">CRONOGRAMA</span><span class="q">Plazo y enfoque de entrega</span><span class="ok" id="ok-ap"></span></div>
+   ${sl('W','Semanas',4,90,1)}
+   <div class="pol" id="ap">${Object.entries(XP.APPR).map(([k,v])=>`<button class="opt" data-p="${k}"><b>${v.n}</b><span>${v.d}</span></button>`).join('')}</div></div>
+  <div class="sec"><div class="sh"><span class="dom">RIESGO</span><span class="q">Registro de riesgos (elige hasta 3)</span><span class="ok" id="ok-risk"></span></div>
+   <div class="rk" id="rk">${Object.entries(XP.RISK).map(([k,v])=>`<button data-r="${k}">${h(v)}</button>`).join('')}</div>
+   ${sl('r','Reserva %',0,40,1)}
+   <div class="lbl"><span>SI EL PROYECTO SE ATRASA MÁS DE 10 %…</span><span class="ok" id="ok-pol"></span></div>
+   <div class="pol" id="pol">${Object.entries(XP.POLS).map(([k,v])=>`<button class="opt" data-p="${k}"><b>${v[0]}</b><span>${v[1]}</span></button>`).join('')}</div>
+   <div class="foot">${fimg('pmbok',18)} PMBOK 8: la reserva responde a riesgos identificados.</div></div>
+  <div class="sec"><div class="sh"><span class="dom">FINANZAS</span><span class="q">Margen de la propuesta</span></div>${sl('m','Margen %',5,40,1)}</div>
+  <div class="whatif" id="wi"></div>
+  <div class="send"><button class="btn" id="send">Enviar propuesta ▸</button><span class="miss" id="miss"></span></div>
+ </section></div></div></main>`;
+ bindHud();
+ $$('.mentors .mface').forEach(b=>b.onclick=()=>{const a=b.dataset.a;$('#bub').innerHTML=`<b>${h(AUT[a].n)}</b> ${h(AUT[a].tip)}`;$$('.mentors .mface').forEach(x=>x.classList.toggle('on',x===b));cur.last=Date.now();});
+ if(scene)scene.stop();
+ const hot=C.hot.map((x,k)=>({...x,sp:x.sp==='papers'?'docs':x.sp,pal:x.sp==='person'?pal(rc.pal[k],x.o):null}));
+ hot.push({sp:'mentor',who:rc.mentor,n:'Mentor'});
+ scene=new PX.Scene($('#cv'),{scene:C.scene,hot,me:S.me,seen:cur.tl.seen,onPick:pick});
+ $('#hots').innerHTML=C.hot.map((x,k)=>`<button data-k="${k}" class="${cur.tl.seen.includes(k)?'seen':''}">${h(x.n)}</button>`).join('')+`<button data-k="${C.hot.length}" class="mbtn">${fimg(rc.mentor,16)} Mentor: ${h(AUT[rc.mentor].n)}</button>`;
+ $('#hots').onclick=e=>{const b=e.target.closest('button');if(b)pick(+b.dataset.k);};
+ $$('.tabs button').forEach(b=>b.onclick=()=>{cur.tab=b.dataset.tab;tabs();});tabs();
+ $('#lvl').onclick=e=>{const b=e.target.closest('.opt');if(!b)return;cur.d.lvl=+b.dataset.l;cur.tc.lvl=1;touch();desk();};
+ $('#pol').onclick=e=>{const b=e.target.closest('.opt');if(!b)return;cur.d.pol=b.dataset.p;cur.tc.pol=1;touch();desk();};
+ $('#ap').onclick=e=>{const b=e.target.closest('.opt');if(!b)return;cur.d.ap=b.dataset.p;cur.tc.ap=1;touch();desk();};
+ $('#rk').onclick=e=>{const b=e.target.closest('button');if(!b)return;const r=cur.d.risks,k=b.dataset.r,i=r.indexOf(k);if(i>=0)r.splice(i,1);else if(r.length<3)r.push(k);cur.tc.risk=r.length?1:0;touch();desk();};
+ $('#base').onclick=()=>{cur.d.base=!cur.d.base;if(cur.d.base){cur.d.specs=[];cur.d.eqs=[];}cur.tc.cap=cur.d.base?1:0;touch();desk();};
+ $('#specs').onclick=e=>{const b=e.target.closest('.cat');if(b)tog(cur.d.specs,b.dataset.id);};
+ $('#eqs').onclick=e=>{const b=e.target.closest('.cat');if(b)tog(cur.d.eqs,b.dataset.id);};
+ $$('input[type=range]').forEach(inp=>inp.oninput=()=>slide(inp));
+ $('#send').onclick=send;desk();runClock();
+}
+function pal(n,o){const g=n%2?'f':'m';return {...(o||{}),g,skin:PX.SKIN[n%5],hair:PX.HAIR[(n>>3)%5],hs:HS[g][(n>>4)%4][0],jacket:['#2B6CB0','#2E9E5B','#4f4f57','#7a4fb5','#c2410c','#0f766e'][(n>>5)%6],pants:['#26324a','#3a3a3a','#4a3624'][(n>>7)%3],glasses:n%7===0,bottom:g==='f'&&(n>>2)%2?'falda':'pantalon'};}
+function sl(k,label,min,max,step){const v=k[0]==='c'&&k.length===2?cur.d.c[+k[1]]:cur.d[k];return `<div class="sl"><label for="s-${k}">${label}</label><input type="range" id="s-${k}" data-k="${k}" min="${min}" max="${max}" step="${step}" value="${v}"><output id="o-${k}"></output></div>`;}
+let wiT=null;
+function touch(){cur.last=Date.now();clearTimeout(wiT);const c=cur;wiT=setTimeout(()=>{if(c)c.tl.wi++;},700);}
+['mousemove','keydown','scroll','pointerdown'].forEach(ev=>addEventListener(ev,()=>{if(cur)cur.last=Date.now();},{passive:true}));
+function tog(arr,id){const i=arr.indexOf(id);if(i>=0)arr.splice(i,1);else{if(arr.length>=3)return;arr.push(id);}cur.d.base=false;cur.tc.cap=(cur.d.specs.length||cur.d.eqs.length)?1:0;touch();desk();}
+function slide(inp){const k=inp.dataset.k,v=+inp.value,d=cur.d;if(k[0]==='c'&&k.length===2){d.c[+k[1]]=v;cur.tc.wbs=d.c.some(x=>x>0)?1:0;}else d[k]=v;
+ if(k==='s'||k==='j'||k==='W')cur.tc.team=1;touch();desk();}
+function pick(k){
+ const {C,rc}=cur;let title,txt;
+ if(k>=C.hot.length){title='MENTOR · '+AUT[rc.mentor].n.toUpperCase();txt=AUT[rc.mentor].tip;}
+ else{const H=C.hot[k];title='NOTA DE CAMPO · '+H.n.toUpperCase();txt=H.tx||H[rc.v];}
+ if(!cur.tl.seen.includes(k))cur.tl.seen.push(k);cur.last=Date.now();
+ const n=$('#note');n.innerHTML=`<div class="note" role="status"><div class="nh"><span>${h(title)}</span><button id="nx">Cerrar</button></div><span id="ty"></span></div>`;
+ $('#nx').onclick=()=>{n.innerHTML='';};
+ const ty=$('#ty');let i=0;if(matchMedia('(prefers-reduced-motion: reduce)').matches)ty.textContent=txt;else{const iv=setInterval(()=>{i+=2;ty.textContent=txt.slice(0,i);if(i>=txt.length)clearInterval(iv);},16);}
+ const b=$(`#hots button[data-k="${k}"]`);if(b)b.classList.add('seen');
+ $('#nexp').textContent=cur.tl.seen.filter(x=>x<C.hot.length).length;if(cur.tab==='exp')tabs();
+}
+function tabs(){
+ const {C,rc}=cur,L=XP.limits(rc);$$('.tabs button').forEach(b=>{b.classList.toggle('on',b.dataset.tab===cur.tab);b.setAttribute('aria-selected',b.dataset.tab===cur.tab);});
+ const tb=$('#tabb'),R=C.rfp;
+ if(cur.tab==='rfp')tb.innerHTML=`<div class="rfp"><div class="rh"><span class="kicker">Solicitud de propuesta</span><b>${h(C.cli)}</b> · ${h(C.city)}</div>
+  <h4>La empresa</h4><p>${h(R.org)}</p><h4>Situación actual</h4><p>${h(R.now)}</p><p class="quote">"${h(C.brief)}"</p>
+  <h4>Objetivos</h4><ul>${R.goal.map(x=>`<li>${h(x)}</li>`).join('')}</ul><h4>Alcance solicitado</h4><ul>${R.scope.map(x=>`<li>${h(x)}</li>`).join('')}</ul>
+  <h4>Condiciones del cliente</h4><ul><li>Presupuesto aprobado: <b>hasta ${M(L.tp)}</b></li><li>Fecha esperada: <b>${L.tw} semanas</b> desde la firma</li></ul>
+  <h4>Interesados</h4><p>${h(R.who)}</p></div>`;
+ else if(cur.tab==='meet'){const left=3-cur.tl.qs.length;tb.innerHTML=`<p class="small" style="margin-top:0">Reunión de 30 minutos con el cliente. Alcanzas a hacer <b>3 preguntas</b>; te quedan <b>${left}</b>.</p>`+
+  C.qs.map((q,k)=>{const asked=cur.tl.qs.includes(k);return `<div class="qa ${asked?'asked':''}"><button data-q="${k}" ${asked||left<=0?'disabled':''}>${h(q.q)}</button>${asked?`<p>${h(q.tx||q[rc.v])}</p>`:''}</div>`;}).join('');
+  tb.querySelectorAll('button[data-q]').forEach(b=>b.onclick=()=>{const k=+b.dataset.q;if(cur.tl.qs.length>=3||cur.tl.qs.includes(k))return;cur.tl.qs.push(k);cur.last=Date.now();$('#nq').textContent=cur.tl.qs.length+'/3';tabs();});}
+ else if(cur.tab==='exp'){const items=[...cur.tl.seen.filter(k=>k<C.hot.length).map(k=>[C.hot[k].n,C.hot[k].tx||C.hot[k][rc.v]]),...cur.tl.qs.map(k=>['Reunión: '+C.qs[k].q,C.qs[k].tx||C.qs[k][rc.v]])];
+  tb.innerHTML=items.length?items.map(([a,b])=>`<div class="clue"><b>${h(a.toUpperCase())}</b>${h(b)}</div>`).join(''):'<p class="empty">Aún no tienes hallazgos. Inspecciona la escena (elementos con <b style="color:#E50914">!</b>) y usa la reunión.</p>';}
+ else if(cur.tab==='lib'){
+  if(C.res){tb.innerHTML=`<p class="small" style="margin-top:0">XPerta no tiene proyectos previos en este dominio. Investiga estos temas con tu buscador y anota en la bitácora lo que encuentres.</p>`+
+   C.terms.map((x,j)=>`<div class="term ${cur.tl.lib.has(j)?'open':''}" data-j="${j}"><button>${h(x.t)}</button><div class="tb"><p style="margin:0 0 6px">${h(x.q)}</p><a href="https://www.google.com/search?q=${encodeURIComponent(x.t)}" target="_blank" rel="noopener">Buscar «${h(x.t)}» ↗</a></div></div>`).join('');
+   tb.querySelectorAll('.term>button').forEach(b=>b.onclick=()=>{const t=b.parentElement;t.classList.toggle('open');cur.tl.lib.add(+t.dataset.j);cur.last=Date.now();});}
+  else{cur.tl.hist=true;tb.innerHTML=`<p class="small" style="margin-top:0">Proyectos que XPerta ya ejecutó. Úsalos para estimar por analogía, pero primero decide a cuál se parece este caso.</p><table class="hist"><tr><th>Proyecto</th><th>Esfuerzo real</th></tr>${C.hist.map(x=>`<tr><td>${h(x.n)}<br><span class="tiny muted">${h(x.note)}</span></td><td class="n">${x.e==null?'—':x.e+' PM'}</td></tr>`).join('')}</table>${C.tip?`<p class="small" style="margin-bottom:0"><b>Pista:</b> ${h(C.tip)}</p>`:''}`;}}
+ else{tb.innerHTML=`<label for="bit" class="small"><b>Supuestos, hallazgos y por qué decides así.</b> Aparece en tu informe y el cliente la tiene en cuenta si negocias.</label><textarea id="bit" placeholder="Ej.: El core no tiene API; asumo automatización de pantallas y un especialista en AS/400…">${h(cur.tl.bit)}</textarea>`;
+  $('#bit').oninput=e=>{cur.tl.bit=e.target.value;cur.last=Date.now();};}
+}
+function desk(){
+ const d=cur.d,st=state();
+ $$('#lvl .opt').forEach(b=>b.classList.toggle('on',+b.dataset.l===d.lvl));
+ $$('#pol .opt').forEach(b=>b.classList.toggle('on',b.dataset.p===d.pol));
+ $$('#ap .opt').forEach(b=>b.classList.toggle('on',b.dataset.p===d.ap));
+ $$('#rk button').forEach(b=>{const on=d.risks.includes(b.dataset.r);b.classList.toggle('on',on);b.setAttribute('aria-pressed',on);});
+ $('#base').classList.toggle('on',d.base);$('#base .box').textContent=d.base?'✓':'';
+ $('#specs').innerHTML=Object.entries(XP.SPEC).map(([id,s])=>{const own=st.pay.has(id);return `<button class="cat ${d.specs.includes(id)?'on':''}" data-id="${id}" aria-pressed="${d.specs.includes(id)}">${own?'<span class="own">EN NÓMINA</span>':''}<b>${h(s.n)}</b><span class="k">${h(s.k)}</span><span class="c">${s.c} M/mes · ${own?'ya contratado':'contratar '+s.f+' M · llega en '+s.l+' sem'}</span></button>`;}).join('');
+ $('#eqs').innerHTML=Object.entries(XP.EQ).map(([id,e])=>{const own=st.inv.has(id);return `<button class="cat ${d.eqs.includes(id)?'on':''}" data-id="${id}" aria-pressed="${d.eqs.includes(id)}">${own?'<span class="own">EN INVENTARIO</span>':''}<b>${h(e.n)}</b><span class="c">${own?'sin costo adicional':e.c+' M · entrega en '+e.l+' sem'}</span></button>`;}).join('');
+ $('#cs').textContent=d.specs.length+'/3';$('#ce').textContent=d.eqs.length+'/3';
+ const setO=(k,val,txt)=>{const i=$('#s-'+k);i.value=val;i.style.setProperty('--p',((val-i.min)/(i.max-i.min)*100)+'%');$('#o-'+k).textContent=txt;};
+ d.c.forEach((v,k)=>setO('c'+k,v,f1(v)+' PM'));setO('a',d.a,'−'+d.a+' %');setO('b',d.b,'+'+d.b+' %');setO('s',d.s,d.s);setO('j',d.j,d.j);setO('W',d.W,d.W+' sem');setO('r',d.r,d.r+' %');setO('m',d.m,d.m+' %');
+ const e=XP.est(d),sum=d.c.reduce((a,b)=>a+b,0);
+ $('#wbsT').innerHTML=`Subtotal ${f1(sum)} PM + gestión 10 % = <b>${f1(e.M)} PM</b>`;
+ $('#omp').innerHTML=`Optimista <b>${f1(e.O)}</b> · Más probable <b>${f1(e.M)}</b> · Pesimista <b>${f1(e.P)}</b> PM`;
+ const okm=(id,v)=>{const el=$('#ok-'+id);if(el){el.textContent=v?'✓ DEFINIDO':'PENDIENTE';el.classList.toggle('done',!!v);}};
+ Object.keys(cur.tc).forEach(k=>okm(k,cur.tc[k]));
+ const pv=XP.preview(d,st.pay,st.inv),capPct=Math.min(100,pv.cap/Math.max(pv.pert,0.1)/2*100);
+ $('#wi').innerHTML=`<div class="wt"><span>¿QUÉ PASARÍA SI…? · calculado solo con tus números</span><span>Caja disponible: ${M(st.cash)}</span></div>
+ <div class="wg"><div><i>Esfuerzo PERT esperado</i><b>${f1(pv.pert)} PM</b><i>σ ±${f1(pv.sd)}</i></div>
+ <div><i>Capacidad de tu plan</i><b>${f1(pv.cap)} PM</b><i>${d.s} senior · ${d.j} junior${d.specs.length?' + especialistas':''}</i></div>
+ <div><i>Probabilidad de cumplir según TU estimación</i><b>${Math.round(pv.prob*100)} %</b></div>
+ <div><i>Duración nominal según tu estimación</i><b>${Math.round(pv.tn)} sem</b><i>zona imposible: &lt; ${Math.round(pv.tm)} sem</i></div>
+ <div><i>Costo planeado</i><b>${M(pv.cost)}</b><i>equipo ${M(pv.lab)} · esp. ${M(pv.spc+pv.fees)} · equipos ${M(pv.eqc)}</i></div>
+ <div><i>Precio de la propuesta</i><b>${M(pv.price)}</b><i>reserva ${M(pv.reserve)} · margen ${d.m} %</i></div></div>
+ <div class="bar2" title="Capacidad del plan frente a tu PERT (línea blanca)"><div class="a" style="width:${capPct}%;background:${pv.cap>=pv.pert?'#2E9E5B':'#F5A524'}"></div><div class="m" style="left:50%"></div></div>
+ ${d.W<pv.tm&&pv.pert>0?'<div class="warn">⚠ Según tu propia estimación, ese plazo está en la zona imposible.</div>':''}${d.s+d.j<1?'<div class="warn">⚠ Necesitas al menos una persona en el equipo.</div>':''}${pv.lead?`<div class="warn" style="color:#9fc3e8">Los recursos nuevos tardan hasta ${pv.lead} semanas en llegar.</div>`:''}`;
+ const N={lvl:'complejidad',wbs:'desglose',cap:'capacidad',team:'equipo/plazo',ap:'enfoque',risk:'riesgos',pol:'respuesta al retraso'};
+ const miss=Object.keys(N).filter(k=>!cur.tc[k]).map(k=>N[k]);if(d.s+d.j<1)miss.push('personas en el equipo');
+ $('#send').disabled=miss.length>0;$('#miss').textContent=miss.length?'Falta definir: '+miss.join(', '):'';
+}
+
+/* ---------------- NEGOCIACIÓN ---------------- */
+function send(){
+ const d={...cur.d,specs:[...cur.d.specs],eqs:[...cur.d.eqs],c:[...cur.d.c],risks:[...cur.d.risks]};
+ if(Date.now()-cur.last<800)cur.tl.wi++;clearTimeout(wiT);
+ const tl={hot:cur.tl.seen.filter(k=>k<cur.C.hot.length).length,hotN:cur.tl.hotN,qn:cur.tl.qs.length,lib:cur.tl.lib.size,hist:cur.tl.hist,wi:cur.tl.wi,bit:cur.tl.bit,t:cur.tl.t,risks:d.risks.length,mentor:cur.tl.seen.includes(cur.C.hot.length)};
+ if(scene)scene.stop();
+ const st=state(),pv=XP.preview(d,st.pay,st.inv),open=XP.clientOpen(cur.rc,d,pv),cred=XP.credible(tl);
+ const C=cur.C,L=open.L;window.scrollTo(0,0);
+ const finish=opt=>{const res=XP.clientResolve(cur.rc,d,pv,open,opt,cred);d.neg=res;S.D.push(d);S.T.push(tl);const C0=cur.C;cur=null;S.i++;inter(C0,res);};
+ if(open.kind==='accept'){finish('—');return;}
+ const msg=open.kind==='tactic'?`Su propuesta está dentro de lo previsto, pero el área de compras nos pide un <b>10 % de descuento</b> antes de firmar.`
+  :`Gracias por la propuesta. ${open.oP?`Nuestro presupuesto aprobado es de <b>${M(L.tp)}</b> y su oferta es de <b>${M(pv.price)}</b>. `:''}${open.oW?`Necesitamos el sistema en <b>${L.tw} semanas</b> y ustedes proponen <b>${d.W}</b>. `:''}¿Pueden ajustarla?`;
+ const ch=[['sostener','Sostener la propuesta','Explicar supuestos, riesgos y por qué cuesta lo que cuesta'],['margen','Reducir el margen','Bajar 10 puntos de margen; el plan no cambia'],['fase1','Proponer una fase 1','Entregar ≈70 % del alcance ahora, con precio y plazo menores'],['recortar','Ajustarse a lo que pide el cliente','Igualar su presupuesto y fecha sin cambiar el alcance'],['retirar','Declinar el contrato','No firmar en estas condiciones']];
+ app.innerHTML=hud()+`<main class="wrap"><section class="nego">
+ <div class="mail2"><div class="mh"><span class="kicker">Respuesta del cliente</span><b>${h(C.cli)}</b></div><p>${msg}</p>
+  <div class="prop"><span>Tu propuesta</span><b>${M(pv.price)}</b><b>${d.W} sem</b><b>${d.s} senior · ${d.j} junior</b><b>${XP.APPR[d.ap].n}</b></div>
+  <div class="cred"><span>Respaldo documentado de tu propuesta:</span><span class="${(tl.bit||'').trim().length>=80?'y':'n'}">Bitácora de supuestos</span><span class="${tl.risks>=2?'y':'n'}">Riesgos registrados</span><span class="${tl.hot+tl.qn>=5?'y':'n'}">Visita y reunión</span></div></div>
+ <h3 class="rt" style="font-size:28px">¿Cómo respondes?</h3>
+ <div class="nopts">${ch.map(([k,t,s])=>`<button class="opt" data-o="${k}"><b>${t}</b><span>${s}</span></button>`).join('')}</div></section></main>`;
+ bindHud();$$('.nopts .opt').forEach(b=>b.onclick=()=>finish(b.dataset.o));
+}
+function inter(C,res){
+ const p=POSTS[(S.seed+S.i*3)%POSTS.length];window.scrollTo(0,0);
+ const head=res.declined?'Declinaste el contrato':res.won?'El cliente firmó':'El cliente eligió a otro proveedor';
+ const sub=res.declined?'XPerta no invierte en este proyecto.':res.won?`Contrato por ${M(res.price)} y ${res.W} semanas${res.scope<1?' (fase 1, ≈70 % del alcance)':''}. Contratas y compras lo que planeaste. Cómo salga el proyecto lo sabrás al cierre del trimestre.`:'No hubo acuerdo con el cliente. Lo que planeaste no se ejecuta.';
+ app.innerHTML=hud()+`<main class="wrap"><section class="inter"><div><div class="kicker">${h(C.cli)}</div><div class="env">${head}</div>
+ <p class="muted" style="max-width:60ch;margin:0 auto">${sub}</p>
+ <div class="postit flash">${fimg(p[0],28)}<span>${h(p[1])} · <b>${h(AUT[p[0]].n)}</b></span></div>
+ <div class="actions" style="justify-content:center;margin-top:24px"><button class="btn" id="nx">${S.i<NC?'Siguiente solicitud ▸':'Cerrar el trimestre ▸'}</button></div></div></section></main>`;
+ bindHud();$('#nx').focus();$('#nx').onclick=()=>{S.i<NC?openCase():closing();};
+}
+
+/* ---------------- CIERRE (estilo plantilla) ---------------- */
+function closing(){
+ S.res=XP.evaluate(S.run,S.D,S.T);S.t1=Date.now();clearInterval(tick);const R=S.res;window.scrollTo(0,0);
+ const ex=R.rows.filter(r=>r.ex),onT=ex.filter(r=>r.ex.over<=0.05).length,onB=ex.filter(r=>r.ex.cost<=r.ex.budget*(1+r.d.r/100)).length;
+ const st=v=>v<=0.05?['ok','A tiempo']:v<=0.2?['warn','Retraso moderado']:['bad','Retraso grave'];
+ app.innerHTML=hud()+`<main class="wrap"><section style="padding-block:24px 10px"><div class="kicker">Cierre del trimestre</div><h2 class="disp" style="font-size:52px;margin:2px 0 6px;font-weight:400">Así se ejecutaron tus contratos</h2>
+ <p class="muted" style="margin:0;max-width:70ch">El contorno gris es lo que comprometiste; la barra de color es lo que realmente pasó. SPI y CPI son los índices de desempeño de cronograma y costo: 1,0 es lo planeado; por debajo de 1,0, peor.</p></section>
+ <div class="kpis5"><div class="kpi"><i>Contratos firmados</i><b>${ex.length}/${NC}</b></div><div class="kpi"><i>Terminados a tiempo</i><b>${onT}/${ex.length}</b></div><div class="kpi"><i>Dentro del presupuesto</i><b>${onB}/${ex.length}</b></div><div class="kpi"><i>Utilidad total</i><b>${M(R.totPr)}</b></div><div class="kpi"><i>Reputación</i><b>${Math.round(R.rep)}</b></div></div>
+ <div class="execs">${R.rows.map(r=>{const C=r.C;
+  if(!r.ex)return `<div class="panel exec"><div class="ph"><span class="qbadge">${String(r.i+1).padStart(2,'0')}</span><span class="et"><b>${h(C.cli)}</b><small>${h(C.t)}</small></span><span class="chip">${r.ng.declined?'Declinado':'Sin contrato'}</span></div><div class="eb"><p class="small" style="margin:0">${r.ng.declined?'Decidiste no firmar.':`El cliente no aceptó por ${r.ng.why||'precio'}.`}</p></div></div>`;
+  const e=r.ex,[cl,lb]=st(e.over),tMax=Math.max(e.Tp,e.Tact)*1.08,bud=e.budget*(1+r.d.r/100),cMax=Math.max(bud,e.cost)*1.08,cc=e.cost<=bud?'ok':e.cost<=bud*1.2?'warn':'bad';
+  return `<div class="panel exec"><div class="ph"><span class="qbadge">${String(r.i+1).padStart(2,'0')}</span><span class="et"><b>${h(C.cli)}</b><small>${h(C.t)}</small></span><span class="chip st-${cl}">${cl==='ok'?'✓':cl==='warn'?'!':'✕'} ${lb}</span></div>
+  <div class="eb"><div class="erow"><span class="el">Plazo</span><div class="trk" title="Comprometido ${r.ng.W} sem · real ${Math.round(e.Tact*XP.WK)} sem"><div class="pl" style="width:${e.Tp/tMax*100}%"></div><div class="ac st-${cl}" style="--w:${e.Tact/tMax*100}%"></div></div><span class="ev">${r.ng.W} → <b>${Math.round(e.Tact*XP.WK)} sem</b> (${e.over>0?'+':''}${Math.round(e.over*100)} %)</span></div>
+  <div class="erow"><span class="el">Costo</span><div class="trk" title="Presupuesto con reserva ${M(bud)} · real ${M(e.cost)}"><div class="pl" style="width:${bud/cMax*100}%"></div><div class="ac st-${cc}" style="--w:${e.cost/cMax*100}%"></div></div><span class="ev">${M(bud)} → <b>${M(e.cost)}</b></span></div>
+  <div class="ind"><span class="chip">SPI ${f1(e.spi)}</span><span class="chip">CPI ${f1(e.cpi)}</span><span class="chip ${e.profit>=0?'st-ok':'st-bad'}">Utilidad ${M(e.profit)}</span>${e.crit?'<span class="chip st-bad">✕ Incidente</span>':''}</div>
+  ${e.notes.length||e.ev?`<ul class="enotes">${e.notes.map(n=>`<li>${h(n)}</li>`).join('')}${e.ev?`<li class="muted">Evento externo (no dependía de ti): ${h(e.ev)}</li>`:''}</ul>`:''}</div></div>`;}).join('')}</div>
+ <div class="actions" style="margin:22px 0 40px"><button class="btn" id="rep">Ver por qué acertaste o fallaste ▸</button></div></main>`;
+ bindHud();requestAnimationFrame(()=>setTimeout(()=>$$('.ac').forEach((a,i)=>{a.style.transitionDelay=(i*0.12)+'s';a.classList.add('grow');}),60));
+ $("#rep").onclick=report;
+}
+
+/* ---------------- INFORME ---------------- */
+const ARCH={
+ socio:{t:'Socio estratégico',v:'ACIERTO',c:'v-ok',a:'mcconnell',d:'Tus rangos contuvieron la realidad, identificaste cuándo hacía falta capacidad especializada, registraste los riesgos correctos y negociaste sin regalar tu estimación.',rec:['Mantén la práctica de escribir supuestos: es lo que te permitió calibrar y defender tus números.','Prueba a estrechar los rangos en dominios que ya conoces, sin perder la reserva en los críticos.']},
+ gestor:{t:'Gestor confiable',v:'ACIERTO PARCIAL',c:'v-ok',a:'cohn',d:'La mayoría de tus decisiones fueron sólidas. Los errores fueron puntuales y se ven contrato por contrato.',rec:['Revisa los contratos con puntaje bajo: casi siempre hay una pista que no se tradujo en la configuración.','Compara tu desglose con el historial de XPerta antes de enviar.']},
+ optimista:{t:'Optimista crónico',v:'FALLO',c:'v-bad',a:'mcconnell',d:'Tus estimaciones quedaron sistemáticamente por debajo de lo que costaba de verdad. Ganaste contratos que luego se atrasaron o perdieron dinero.',rec:['Separa la estimación (lo que costará) del objetivo (lo que el cliente quiere oír) y del compromiso (lo que firmas).','Revisa la zona imposible antes de comprometer un plazo.','Usa el porcentaje pesimista con honestidad.']},
+ sobre:{t:'Sobredimensionado',v:'FALLO',c:'v-bad',a:'pmbok',d:'Sobrestimaste o invertiste en capacidad que los casos no pedían. Tus propuestas salieron caras o lentas y los clientes no firmaron.',rec:['Cada inversión debe responder a una pista concreta del caso. Si no la puedes nombrar, sobra.','Ajusta el equipo al esfuerzo: más gente sube el costo sin bajar el plazo en la misma proporción.']},
+ ciego:{t:'Ciego a la complejidad',v:'FALLO',c:'v-bad',a:'sommerville',d:'En proyectos de complejidad alta o crítica trataste el caso como si el equipo inicial bastara. Faltaron especialistas o equipos que el dominio exigía.',rec:['Cuando aparezca regulación, seguridad de personas o hardware en campo, detente e investiga antes de estimar.','Pregunta qué norma aplica y quién en el equipo la conoce. Si nadie, ese es tu especialista.']},
+ presion:{t:'Complaciente con el cliente',v:'FALLO',c:'v-bad',a:'mcconnell',d:'Estimaste razonablemente, pero cuando el cliente presionó ajustaste el precio y el plazo a lo que pedía sin cambiar el alcance. Firmaste compromisos que tu propia estimación decía que no se podían cumplir.',rec:['Una estimación no se negocia; se negocian el alcance, el plazo o el precio con sus consecuencias.','Una fase 1 o un recorte de margen protegen la relación sin mentirle al cliente sobre el esfuerzo.']},
+ brooks:{t:'Víctima de Brooks',v:'FALLO',c:'v-bad',a:'cohn',d:'Planeaste con poca gente o plazos cortos y, al atrasarte, sumaste personas tarde. Cada incorporación costó dinero y casi no recuperó plazo.',rec:['Dimensiona el equipo desde el inicio con la duración nominal como referencia.','Ante un retraso, negociar alcance o re-planificar suele costar menos que sumar gente tarde.']},
+ explorador:{t:'Explorador sin cierre',v:'FALLO PARCIAL',c:'v-mid',a:'boehm',d:'Investigaste mucho, pero tus decisiones no reflejan lo que encontraste: los errores van en direcciones distintas de un contrato a otro.',rec:['Antes de enviar, relee tu bitácora y verifica que cada hallazgo se vea en una variable de la mesa.','Convierte cada pista en una pregunta: ¿cambia la complejidad, la capacidad, el desglose o el plazo?']},
+ veloz:{t:'Apostador veloz',v:'FALLO',c:'v-bad',a:'boehm',d:'Decidiste casi sin visitar al cliente, sin preguntar ni investigar, y sin registrar supuestos. Una estimación sin evidencia no se puede defender, aunque a veces acierte.',rec:['Inspecciona todo lo que la visita te muestre y usa las tres preguntas de la reunión.','En dominios nuevos, investiga los términos antes de mover un solo control.']},
+ rescate:{t:'Rescate a medias',v:'MIXTO',c:'v-mid',a:'pressman',d:'Tuviste aciertos y errores en proporciones parecidas, sin un patrón dominante.',rec:['Mira el detalle por contrato: ahí se ve qué decisión pesó más.','Practica con casos de investigación: son los que más separan una estimación buena de una regular.']}};
+const QUIZ=[['El modelo paramétrico de estimación COCOMO es de…','boehm'],['«Una estimación no es un compromiso ni un objetivo» es una idea central de…','mcconnell'],['La estimación relativa con story points y planning poker se asocia sobre todo a…','cohn'],['«Software Engineering: A Practitioner\'s Approach» es de…','pressman'],['El libro «Software Engineering» con énfasis en sistemas críticos y confiabilidad es de…','sommerville'],['Los siete dominios de desempeño (Gobernanza, Alcance, Cronograma, Finanzas, Interesados, Recursos, Riesgo) son de…','pmbok']];
+function voice(r){
+ if(r.ng.ceded)return['mcconnell','Ajustaste tu estimación a lo que el cliente quería oír. Eso la convirtió en un objetivo: se negocian alcance, plazo o precio, no el esfuerzo.'];
+ if(r.missS.some(s=>XP.SPEC[s].crit)||r.missE.some(e=>XP.EQ[e].crit)||(r.V.lvl===4&&r.d.lvl<=2))return['sommerville','En sistemas críticos, el análisis de riesgos y la certificación pesan tanto como el código. Ignorarlos no ahorra trabajo: lo aplaza y lo encarece.'];
+ if(r.missS.length||r.missE.length)return['pressman','La calidad se diseña desde el inicio. Incorporar tarde al especialista o al equipo que faltaba cuesta más que haberlo planeado.'];
+ if(r.signed<=-0.2)return['mcconnell','Si el número salió de lo que el cliente quería oír, no es una estimación sino un objetivo. Presenta un rango con supuestos explícitos.'];
+ if(r.shape<0.65)return['cohn','Tu desglose no reflejaba dónde estaba el trabajo. Comparar cada componente con algo conocido evita que una parte se coma a las demás.'];
+ if(r.wasteS.length+r.wasteE.length>=2||r.signed>=0.25)return['pmbok','Enfoque en el valor: cada inversión debe justificarse por el resultado que produce para el cliente y para la organización.'];
+ if(!r.hit||r.width>4)return['boehm','Al inicio la incertidumbre puede ir de 0,25x a 4x. Explorar e investigar es lo que estrecha el cono; un rango que no contiene la realidad no sirve para decidir.'];
+ return['mcconnell','Rango con supuestos explícitos y capacidad acorde al riesgo: así se ve una estimación profesional.'];}
+function diag(r){
+ const L=[],y=(ok,d,t)=>L.push([ok,d,t]),V=r.V,d=r.d;
+ y(r.dl===0?1:(r.dl===1?0.5:0),'ALCANCE',r.dl===0?`Clasificaste bien la complejidad (${LV[V.lvl]}).`:`Clasificaste ${LV[d.lvl]}; era ${LV[V.lvl]}. ${V.why}`);
+ if(r.missS.length)y(0,'RECURSOS',`Faltó personal especializado: ${r.missS.map(s=>XP.SPEC[s].n).join(', ')}.`);
+ if(r.missE.length)y(0,'RECURSOS',`Faltaron equipos especializados: ${r.missE.map(e=>XP.EQ[e].n).join(', ')}.`);
+ if(r.wasteS.length||r.wasteE.length)y(0.5,'FINANZAS',`Inversión sin necesidad: ${[...r.wasteS.map(s=>XP.SPEC[s].n),...r.wasteE.map(e=>XP.EQ[e].n)].join(', ')}.`);
+ if(!r.missS.length&&!r.missE.length&&!r.wasteS.length&&!r.wasteE.length)y(1,'RECURSOS',(V.s.length||V.e.length)?'La capacidad que elegiste era la que el caso exigía.':'Correcto: el equipo inicial bastaba.');
+ y(r.mre<=0.25?1:(r.mre<=0.5?0.5:0),'FINANZAS',`Tu PERT fue ${f1(r.e.pert)} PM; el esfuerzo real con tu configuración era ≈ ${f1(r.ref)} PM (${r.signed>=0?'+':''}${Math.round(r.signed*100)} %).`);
+ y(r.hit?(r.width<=4?1:0.5):0,'FINANZAS',r.hit?(r.width<=4?`Tu rango [${f1(r.e.O)} – ${f1(r.e.P)}] contenía el valor real.`:`Tu rango contenía el valor real, pero era tan amplio (${f1(r.width)}x) que no ayudaba a decidir.`):`El valor real quedó fuera de tu rango [${f1(r.e.O)} – ${f1(r.e.P)}].`);
+ const big=XP.COMP.map((c,k)=>[c[1],r.d.c[k],r.truthC[k]]).filter(([n,a,b])=>Math.abs(a-b)>Math.max(2,0.5*b)).sort((p,q)=>Math.abs(q[2]-q[1])-Math.abs(p[2]-p[1])).slice(0,2);
+ big.forEach(([n,a,b])=>y(0,'ALCANCE',`${n}: estimaste ${f1(a)} PM; el caso requería ≈ ${f1(b)} PM.`));
+ y(r.sW===7?1:(r.sW>0?0.5:0),'CRONOGRAMA',`Comprometiste ${r.ng.W||d.W} semanas; con tu equipo el plazo factible era ≈ ${Math.round(r.Texp*XP.WK)} semanas.`);
+ if(!r.sN)y(0,'RECURSOS',r.Tw>1.6*XP.tnom(r.Eref*(r.ng.scope||1))?`Un equipo de ${d.s} senior y ${d.j} junior era demasiado pequeño para este esfuerzo.`:`El equipo era más grande de lo que el esfuerzo justificaba.`);
+ y(r.apFit>=0.8?1:0.5,'CRONOGRAMA',r.apFit>=0.8?`El enfoque ${XP.APPR[d.ap].n.toLowerCase()} era adecuado para este nivel de incertidumbre.`:`El enfoque ${XP.APPR[d.ap].n.toLowerCase()} encaja mal: ${V.lvl>=3?'en un dominio incierto conviene descubrir temprano (iterar o pilotear).':'el piloto agrega costo cuando no hay hardware en campo.'}`);
+ y(r.rTP/V.rk.length>=0.67?1:(r.rTP?0.5:0),'RIESGO',`Identificaste ${r.rTP} de ${V.rk.length} riesgos clave (${V.rk.map(k=>XP.RISK[k]).join('; ')}).`);
+ if(!r.sR)y(0.5,'RIESGO',d.r>35?`Una reserva de ${d.r} % encarece la propuesta sin un riesgo que la justifique.`:`Reserva de ${d.r} %: insuficiente para un proyecto de complejidad ${LV[V.lvl].toLowerCase()}.`);
+ if(r.ng.ceded)y(0,'INTERESADOS','Cediste a la presión: igualaste presupuesto y fecha del cliente sin cambiar el alcance.');
+ else if(r.ng.opt&&r.ng.opt!=='—')y(1,'INTERESADOS',`Negociaste con «${({sostener:'sostener la propuesta',margen:'reducir margen',fase1:'proponer una fase 1',retirar:'declinar'})[r.ng.opt]}» sin alterar tu estimación.`);
+ return L;}
+function radar(doms){
+ const K=[['alc','Alcance'],['cro','Cronograma'],['fin','Finanzas'],['int','Interesados'],['rec','Recursos'],['rie','Riesgo'],['gob','Gobernanza']],cx=170,cy=150,R0=105,n=K.length;
+ const pt=(i,v)=>{const a=-Math.PI/2+i*2*Math.PI/n;return[cx+Math.cos(a)*R0*v/100,cy+Math.sin(a)*R0*v/100];};
+ let s=`<svg viewBox="0 0 340 300" role="img" aria-label="Radar por dominio de desempeño PMBOK 8">`;
+ [25,50,75,100].forEach(v=>{s+=`<polygon points="${K.map((_,i)=>pt(i,v).join(',')).join(' ')}" fill="none" stroke="#e2e0dc" stroke-width="1"/>`;});
+ K.forEach((k,i)=>{const[x,y]=pt(i,100),[lx,ly]=pt(i,122);s+=`<line x1="${cx}" y1="${cy}" x2="${x}" y2="${y}" stroke="#e2e0dc"/><text x="${lx}" y="${ly}" text-anchor="middle" dominant-baseline="middle" font-size="11" font-family="Silkscreen,monospace" fill="#141414">${k[1]}</text>`;});
+ s+=`<polygon points="${K.map((k,i)=>pt(i,doms[k[0]]).join(',')).join(' ')}" fill="rgba(229,9,20,.16)" stroke="#E50914" stroke-width="2"/>`;
+ K.forEach((k,i)=>{const[x,y]=pt(i,doms[k[0]]);s+=`<circle cx="${x}" cy="${y}" r="5" fill="#E50914" stroke="#fff" stroke-width="2"><title>${k[1]}: ${Math.round(doms[k[0]])}/100</title></circle>`;});
+ return s+'</svg>';}
+function report(){
+ const R=S.res,A=ARCH[R.arch],mins=Math.round((S.t1-S.t0)/60000),verdict=R.arch==='veloz'&&R.decision>=70?'ACIERTO SIN EVIDENCIA':A.v;window.scrollTo(0,0);
+ const qs=[...QUIZ].map((q,i)=>[q,(S.seed>>i)&7]).sort((a,b)=>a[1]-b[1]).slice(0,3).map(x=>x[0]);
+ const DN={alc:'Alcance',cro:'Cronograma',fin:'Finanzas',int:'Interesados',rec:'Recursos',rie:'Riesgo',gob:'Gobernanza'};
+ app.innerHTML=hud().replace(/<span class="stat"><i>Tiempo<\/i>[\s\S]*?<\/span>/,`<span class="stat"><i>Tiempo</i> <b>${mins} min</b></span>`)+`<main class="wrap">
+ <section class="hero"><img class="px hbust" src="${PX.bustURL(S.me,8)}" width="128" height="128" alt=""><div><div class="kicker">Informe de cierre · ${h(S.name)} · partida #${S.seed.toString(36).toUpperCase()}</div>
+ <h1>${h(A.t)}</h1><span class="verdict ${A.c}">${verdict}</span><p style="max-width:70ch;margin:10px 0 0">${h(A.d)}${R.arch==='veloz'&&R.decision>=70?' Acertaste en buena parte, pero sin evidencia: en un proyecto real no podrías defender esos números.':''}</p></div>
+ <div class="big">${Math.round(R.score)}<small>PUNTAJE / 100</small></div></section>
+ <div class="rgrid"><div class="panel"><div class="ph"><span class="h3">Tu perfil por dominio · PMBOK 8</span></div><div style="padding:6px 10px">${radar(R.doms)}</div>
+  <div class="dtab">${Object.entries(DN).map(([k,n])=>`<span>${n} <b>${Math.round(R.doms[k])}</b></span>`).join('')}</div></div>
+ <div><div class="sbar"><div class="l"><span>Calidad de tus decisiones (70 %)</span><span>${Math.round(R.decision)}</span></div><div class="tr"><div class="fi" style="width:${R.decision}%"></div></div></div>
+  <div class="sbar"><div class="l"><span>Diligencia: visita, reunión, investigación y supuestos (15 %)</span><span>${Math.round(R.dilig)}</span></div><div class="tr"><div class="fi" style="width:${R.dilig}%"></div></div></div>
+  <div class="sbar"><div class="l"><span>Resultado de XPerta: utilidad y reputación (15 %)</span><span>${Math.round(R.biz)}</span></div><div class="tr"><div class="fi" style="width:${R.biz}%"></div></div></div>
+  <p class="small muted">La calidad de la decisión se evalúa contra lo que cada caso realmente exigía, sin contar la suerte: los eventos externos afectan la ejecución, no tu puntaje de decisión.</p>
+  <div class="traits">${R.traits.map(t=>`<span class="chip">${h(t)}</span>`).join('')}</div>
+  <div class="voice" style="margin-top:14px">${fimg(A.a,40)}<div><b>${h(AUT[A.a].n.toUpperCase())} · QUÉ HARÍAS DISTINTO</b><ul style="margin:4px 0 0;padding-left:18px">${A.rec.map(x=>`<li>${h(x)}</li>`).join('')}</ul></div></div>
+  <div class="kpis" style="margin-top:14px"><div class="kpi"><i>Error medio (MMRE)</i><b>${pct(R.mmre)}</b></div><div class="kpi"><i>PRED(25)</i><b>${pct(R.pred25)}</b></div><div class="kpi"><i>Sesgo mediano</i><b>${R.bias>=0?'+':''}${pct(R.bias)}</b></div><div class="kpi"><i>Complejidad acertada</i><b>${Math.round(R.cxAcc*NC)}/${NC}</b></div><div class="kpi"><i>Rangos que contenían la realidad</i><b>${Math.round(R.hitRate*NC)}/${NC}</b></div><div class="kpi"><i>Caja final</i><b>${M(R.cash)}</b></div></div></div></div>
+ <h3 class="rt">Contrato por contrato: por qué acertaste o fallaste</h3>${R.rows.map(caseCard).join('')}
+ <h3 class="rt">¿Quién estaba en la oficina?</h3><p class="small muted" style="margin-top:0">No suma puntos.</p>
+ <div class="quiz">${qs.map((x,k)=>`<div class="q" data-a="${x[1]}"><p>${k+1}. ${h(x[0])}</p><div class="opts">${AIDS.map(a=>`<button data-a="${a}">${fimg(a,22)} ${h(AUT[a].n)}</button>`).join('')}</div></div>`).join('')}</div>
+ <h3 class="rt">Autores de referencia</h3><div class="auths">${AIDS.map(a=>`<div class="auth">${fimg(a,48)}<div><b>${h(AUT[a].n)}</b><span class="tiny muted">${h(AUT[a].w)}</span><p class="small" style="margin:6px 0 0">${h(AUT[a].i)}</p></div></div>`).join('')}</div>
+ <div class="actions no-print"><button class="btn" id="pr">Imprimir / guardar PDF</button><button class="btn ghost" id="ag">Jugar otra vez (casos nuevos)</button></div>
+ <p class="disc">Modelo didáctico simplificado: duración nominal 3·E<sup>1/3</sup> meses con límite de compresión ≈25 %; productividad decreciente con el tamaño del equipo; multiplicadores por capacidad faltante inspirados en los factores de costo de COCOMO II; SPI y CPI calculados al cierre. Las frases de los autores son paráfrasis de ideas publicadas, no citas textuales. Normas citadas: Decreto 4725 de 2005 y Decreto 1886 de 2015 (Colombia), Ley 1581 de 2012, IEC 62304, ISO 14971, ISO 20816. Clientes y cifras son ficticios. PMBOK® es marca registrada del Project Management Institute.</p></main>`;
+ bindHud();
+ $('#pr').onclick=()=>{$$('details.pcase').forEach(d=>d.open=true);setTimeout(()=>window.print(),60);};
+ $('#ag').onclick=()=>{S.res=null;start(S.name,S.me);};
+ $$('.quiz .q').forEach(q=>q.onclick=e=>{const b=e.target.closest('button');if(!b||q.dataset.done)return;q.dataset.done=1;q.querySelectorAll('button').forEach(x=>{if(x.dataset.a===q.dataset.a)x.classList.add('right');else if(x===b)x.classList.add('wrong');x.disabled=true;});});
+}
+function caseCard(r){
+ const C=r.C,d=r.d,V=r.V,[va,vt]=voice(r),L=diag(r),e=r.ex;
+ const neg=r.ng.opt==='—'?'Aceptó tu propuesta sin negociar.':`Respuesta elegida: ${({sostener:'sostener la propuesta',margen:'reducir margen',fase1:'proponer fase 1',recortar:'ajustarse a lo que pedía el cliente',retirar:'declinar'})[r.ng.opt]}. ${r.ng.won?'El cliente firmó.':r.ng.declined?'':'El cliente no firmó.'}`;
+ const res=!r.ng.won?`<b>Sin contrato.</b> ${neg}`:`${neg} <b>Ejecutado en ${Math.round(e.Tact*XP.WK)} semanas</b> (comprometiste ${r.ng.W}). Costo real ${M(e.cost)} · precio ${M(e.price)} · <b style="color:${e.profit>=0?'#2E9E5B':'#B20710'}">utilidad ${M(e.profit)}</b>.`;
+ const ic=v=>v===1?['✓','y']:v===0?['✕','n']:['~','w'];
+ return `<details class="pcase"><summary><span class="num">${String(r.i+1).padStart(2,'0')}</span><span class="nm">${h(C.t)}${C.res?' <span class="chip red">investigación</span>':''}<small>${h(C.cli)} · ${h(C.city)} · real: complejidad ${LV[V.lvl].toLowerCase()}</small></span><span class="sc">${Math.round(r.dec)}</span></summary>
+ <div class="body"><div><span class="kicker">Lo que realmente era</span><p style="margin:4px 0 0">${h(V.why)}</p></div>
+ <div class="tw"><table class="cmp"><tr><th></th><th>TU DECISIÓN</th><th>LO QUE EL CASO EXIGÍA</th></tr>
+ <tr><td>Complejidad</td><td>${LV[d.lvl]}</td><td>${LV[V.lvl]}</td></tr>
+ <tr><td>Especialistas</td><td>${d.specs.map(s=>XP.SPEC[s].n).join(', ')||'Ninguno'}</td><td>${V.s.map(s=>XP.SPEC[s].n).join(', ')||'Ninguno'}${(V.ok||[]).length?`<br><span class="tiny muted">Aceptable: ${V.ok.map(s=>XP.SPEC[s].n).join(', ')}</span>`:''}</td></tr>
+ <tr><td>Equipos</td><td>${d.eqs.map(x=>XP.EQ[x].n).join(', ')||'Ninguno'}</td><td>${V.e.map(x=>XP.EQ[x].n).join(', ')||'Ninguno'}</td></tr>
+ ${XP.COMP.map((c,k)=>`<tr><td>${c[1]}</td><td>${f1(d.c[k])} PM</td><td>≈ ${f1(r.truthC[k])} PM</td></tr>`).join('')}
+ <tr><td><b>Total con gestión</b></td><td><b>${f1(r.e.M)} PM</b> (PERT ${f1(r.e.pert)})</td><td><b>≈ ${f1(r.truth)} PM</b>${Math.abs(r.Eref-r.truth)>0.5?` · ${f1(r.Eref)} con tu capacidad`:''}</td></tr>
+ <tr><td>Plan</td><td>${d.s} senior · ${d.j} junior · ${d.W} sem · ${XP.APPR[d.ap].n.toLowerCase()} · reserva ${d.r} %</td><td>≈ ${r.ng.won?'':''}${Math.round(r.Texp*XP.WK)} sem con tu equipo</td></tr>
+ <tr><td>Riesgos</td><td>${d.risks.map(k=>XP.RISK[k]).join('; ')}</td><td>${V.rk.map(k=>XP.RISK[k]).join('; ')}</td></tr></table></div>
+ <ul class="dx">${L.map(([v,dm,t])=>{const[a,c]=ic(v);return `<li><span class="ic ${c}">${a}</span><span class="d">${dm}</span><span>${h(t)}</span></li>`;}).join('')}</ul>
+ <div><span class="kicker">Resultado</span><p style="margin:4px 0 0">${res}${e&&e.notes.length?'<br>'+e.notes.map(h).join('<br>'):''}${e&&e.ev?`<br><span class="muted">Evento externo: ${h(e.ev)}</span>`:''}</p></div>
+ <div class="voice">${fimg(va,40)}<div><b>${h(AUT[va].n.toUpperCase())} DIRÍA</b><br>${h(vt)}</div></div>
+ <p class="tiny muted" style="margin:0">Exploración: ${r.tl.hot}/${r.tl.hotN} elementos · ${r.tl.qn}/3 preguntas · ${C.res?r.tl.lib+' temas investigados':(r.tl.hist?'consultó el historial':'sin historial')} · ${f1((r.tl.t||0)/60)} min activos · diligencia ${Math.round(r.dil)}/100</p>
+ ${r.tl.bit&&r.tl.bit.trim()?`<div class="voice bl"><div><b>TU BITÁCORA</b><br>${h(r.tl.bit)}</div></div>`:''}</div></details>`;
+}
+window.addEventListener('DOMContentLoaded',showIntro);
+window.addEventListener('beforeunload',e=>{if(S&&S.i>0&&!S.res){e.preventDefault();e.returnValue='';}});
+})();
+</script>
+</body>
+</html>
